@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Yeni Sipariş</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+
+<body class="bg-light">
+
+
+<div class="container mt-4">
+
+
+<div class="card shadow">
+
+
+<div class="card-header bg-danger text-white">
+
+<h3>
+Yeni Sipariş Oluştur
+</h3>
+
+</div>
+
+
+
+<div class="card-body">
+
+
+<form id="siparisForm" method="POST">
+
+
+
+<div class="row">
+
+
+<div class="col-md-5">
+
+
+<label class="form-label">
+Ürün
+</label>
+
+
+<select
+id="urun"
+class="form-select">
+
+
+<option value="">
+Ürün Seçiniz
+</option>
+
+
+
+{% for u in urunler %}
+
+
+<option
+value="{{ u[0] }}"
+data-kapasite="{{ u[6] }}"
+data-tip="{{ u[7] }}">
+
+{{ u[2] }} - {{ u[7] }}
+
+</option>
+
+
+{% endfor %}
+
+
+</select>
+
+
+</div>
+
+
+
+
+<div class="col-md-3">
+
+
+<label class="form-label">
+Miktar
+</label>
+
+
+<input
+
+type="number"
+
+id="miktar"
+
+class="form-control"
+
+min="1">
+
+
+</div>
+
+
+
+
+<div class="col-md-2 d-flex align-items-end">
+
+
+<button
+
+type="button"
+
+id="ekleBtn"
+
+class="btn btn-success w-100">
+
++ Ekle
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<hr>
+
+
+
+<!-- PALET DURUMU -->
+
+
+<div class="row mb-3">
+
+
+
+<div class="col-md-6">
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-header bg-primary text-white">
+
+❄️ Donuk Palet Doluluk
+
+</div>
+
+
+
+<div class="card-body">
+
+
+<div class="progress" style="height:30px">
+
+
+<div
+
+id="donukBar"
+
+class="progress-bar"
+
+style="width:0%">
+
+0%
+
+</div>
+
+
+</div>
+
+
+
+<h5 class="mt-3"
+
+id="donukBilgi">
+
+0.00 Palet
+
+</h5>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="col-md-6">
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-header bg-info text-white">
+
+🧊 Soğuk Palet Doluluk
+
+</div>
+
+
+
+<div class="card-body">
+
+
+<div class="progress" style="height:30px">
+
+
+<div
+
+id="sogukBar"
+
+class="progress-bar"
+
+style="width:0%">
+
+0%
+
+</div>
+
+
+</div>
+
+
+
+<h5 class="mt-3"
+
+id="sogukBilgi">
+
+0.00 Palet
+
+</h5>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+<p>
+
+Toplam Koli:
+
+<b id="toplamKoli">
+
+0
+
+</b>
+
+</p>
+
+
+
+
+<hr>
+
+
+
+
+<h5>
+
+Eklenen Ürünler
+
+</h5>
+
+
+
+
+<table class="table table-bordered">
+
+
+<thead class="table-dark">
+
+
+<tr>
+
+
+<th>
+Ürün
+</th>
+
+
+<th>
+Miktar
+</th>
+
+
+<th>
+İşlem
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody id="urunTablo">
+
+
+<tr>
+
+<td colspan="3"
+
+class="text-center text-muted">
+
+Henüz ürün eklenmedi.
+
+</td>
+
+</tr>
+
+
+</tbody>
+
+
+
+</table>
+
+
+
+
+
+<div class="mt-4">
+
+
+<a href="/siparisler"
+
+class="btn btn-secondary">
+
+İptal
+
+</a>
+
+
+
+<input
+
+type="hidden"
+
+id="urunler_json"
+
+name="urunler_json">
+
+
+
+<button
+
+type="submit"
+
+class="btn btn-danger float-end">
+
+Siparişi Kaydet
+
+</button>
+
+
+
+</div>
+
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<script>
+
+
+let urunler=[];
+
+
+
+const ekleBtn=document.getElementById("ekleBtn");
+
+const urunSec=document.getElementById("urun");
+
+const miktar=document.getElementById("miktar");
+
+const tablo=document.getElementById("urunTablo");
+
+
+
+
+
+ekleBtn.addEventListener("click",function(){
+
+
+
+if(
+urunSec.value=="" ||
+miktar.value==""
+){
+
+
+alert("Ürün ve miktar giriniz.");
+
+return;
+
+}
+
+
+
+
+let id=urunSec.value;
+
+
+
+let ad=
+urunSec.options[
+urunSec.selectedIndex
+].text;
+
+
+
+let adet=
+Number(miktar.value);
+
+
+
+let kapasite=
+Number(
+urunSec.options[
+urunSec.selectedIndex
+].dataset.kapasite
+);
+
+
+
+let tip=
+urunSec.options[
+urunSec.selectedIndex
+].dataset.tip;
+
+
+
+urunler.push({
+
+id:id,
+
+ad:ad,
+
+miktar:adet,
+
+kapasite:kapasite,
+
+tip:tip
+
+});
+
+
+console.log("Ürün tipi:", tip);
+
+
+
+tabloyuYenile();
+
+
+
+urunSec.selectedIndex=0;
+
+miktar.value="";
+
+
+
+});
+
+
+
+
+
+
+function tabloyuYenile(){
+
+
+
+tablo.innerHTML="";
+
+
+
+urunler.forEach(function(u,index){
+
+
+
+tablo.innerHTML += `
+
+
+<tr>
+
+<td>
+
+${u.ad}
+
+</td>
+
+
+<td>
+
+${u.miktar}
+
+</td>
+
+
+<td>
+
+<button
+
+type="button"
+
+class="btn btn-danger btn-sm"
+
+onclick="sil(${index})">
+
+Sil
+
+</button>
+
+</td>
+
+
+</tr>
+
+
+`;
+
+
+
+});
+
+
+
+paletHesapla();
+
+
+}
+
+
+
+
+
+
+
+function paletHesapla(){
+
+    let donukPalet = 0;
+    let sogukPalet = 0;
+    let toplamKoli = 0;
+
+
+    urunler.forEach(function(u){
+
+
+        let palet = 0;
+
+
+        if(u.kapasite > 0){
+
+            palet = u.miktar / u.kapasite;
+
+        }
+
+
+        console.log(
+            u.ad,
+            "TIP:",
+            u.tip,
+            "PALET:",
+            palet
+        );
+
+
+        if(u.tip == "Soğuk"){
+
+            sogukPalet += palet;
+
+        }
+        else{
+
+            donukPalet += palet;
+
+        }
+
+
+        toplamKoli += u.miktar;
+
+
+    });
+
+
+
+    let donukYuzde =
+        Math.round(
+            (donukPalet % 1) * 100
+        );
+
+
+    if(donukPalet < 1){
+
+        donukYuzde =
+            Math.round(
+                donukPalet * 100
+            );
+
+    }
+
+
+
+    let sogukYuzde =
+        Math.round(
+            (sogukPalet % 1) * 100
+        );
+
+
+    if(sogukPalet < 1){
+
+        sogukYuzde =
+            Math.round(
+                sogukPalet * 100
+            );
+
+    }
+
+
+
+    document.getElementById("donukBar").style.width =
+        donukYuzde + "%";
+
+
+    document.getElementById("donukBar").innerHTML =
+        donukYuzde + "%";
+
+
+    document.getElementById("donukBilgi").innerHTML =
+        donukPalet.toFixed(2) + " Palet";
+
+
+
+    document.getElementById("sogukBar").style.width =
+        sogukYuzde + "%";
+
+
+    document.getElementById("sogukBar").innerHTML =
+        sogukYuzde + "%";
+
+
+    document.getElementById("sogukBilgi").innerHTML =
+        sogukPalet.toFixed(2) + " Palet";
+
+
+
+    document.getElementById("toplamKoli").innerHTML =
+        toplamKoli;
+
+
+}
+
+
+
+
+
+
+
+function sil(index){
+
+
+urunler.splice(index,1);
+
+
+tabloyuYenile();
+
+
+}
+
+
+
+
+
+
+
+document
+.getElementById("siparisForm")
+.addEventListener(
+"submit",
+function(e){
+
+
+
+if(urunler.length==0){
+
+
+alert("Lütfen en az bir ürün ekleyiniz.");
+
+e.preventDefault();
+
+return;
+
+
+}
+
+
+
+document.getElementById("urunler_json").value=
+
+JSON.stringify(urunler);
+
+
+
+});
+
+
+
+</script>
+
+
+</body>
+
+</html>

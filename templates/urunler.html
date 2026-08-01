@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ürünler</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body class="bg-light">
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h2>Ürünler</h2>
+
+        <a href="/yeni-urun" class="btn btn-danger">
+
+            + Yeni Ürün
+
+        </a>
+
+    </div>
+
+    <div class="row mb-3">
+
+        <div class="col-md-4">
+
+            <input
+                type="text"
+                id="aramaKutusu"
+                class="form-control"
+                placeholder="🔍 Ürün Ara...">
+
+        </div>
+
+    </div>
+
+    <div class="card shadow">
+
+        <div class="card-body">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-dark">
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Ürün Kodu</th>
+                        <th>Ürün Adı</th>
+                        <th>Kategori</th>
+                        <th>Birim</th>
+                        <th>Durum</th>
+                        <th>İşlem</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% if urunler %}
+
+                    {% for u in urunler %}
+
+                    <tr class="urunSatiri">
+
+                        <td>{{ u[0] }}</td>
+                        <td>{{ u[1] }}</td>
+                        <td>{{ u[2] }}</td>
+                        <td>{{ u[3] }}</td>
+                        <td>{{ u[4] }}</td>
+                        <td>{{ u[5] }}</td>
+
+                        <td>
+
+                            <a href="/urun-duzenle/{{u[0]}}" class="btn btn-primary btn-sm">
+
+                                Düzenle
+
+                            </a>
+
+                            <a
+                                href="/urun-sil/{{u[0]}}"
+                                class="btn btn-danger btn-sm"
+                                onclick="return confirm('Ürün silinsin mi?');">
+
+                                Sil
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <tr>
+
+                        <td colspan="7" class="text-center text-muted p-5">
+
+                            Henüz kayıtlı ürün bulunmuyor.
+
+                        </td>
+
+                    </tr>
+
+                {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <div class="mt-3">
+
+        <a href="/dashboard" class="btn btn-secondary">
+
+            ← Dashboard'a Dön
+
+        </a>
+
+    </div>
+
+</div>
+
+<script>
+
+const aramaKutusu = document.getElementById("aramaKutusu");
+
+aramaKutusu.addEventListener("keyup", function () {
+
+    let filtre = this.value.toLowerCase();
+
+    let satirlar = document.querySelectorAll(".urunSatiri");
+
+    satirlar.forEach(function(satir){
+
+        let metin = satir.innerText.toLowerCase();
+
+        if(metin.includes(filtre)){
+
+            satir.style.display="";
+
+        }else{
+
+            satir.style.display="none";
+
+        }
+
+    });
+
+});
+
+</script>
+
+</body>
+
+</html>

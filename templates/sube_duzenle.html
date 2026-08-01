@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Şube Düzenle</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <div class="card shadow">
+
+        <div class="card-header bg-warning">
+
+            <h3>Şube Düzenle</h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST">
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">Şube Adı</label>
+
+                        <input
+                            type="text"
+                            name="sube_adi"
+                            class="form-control"
+                            value="{{ sube[1] }}"
+                            required>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">Kullanıcı Adı</label>
+
+                        <input
+                            type="text"
+                            name="kullanici_adi"
+                            class="form-control"
+                            value="{{ sube[2] }}"
+                            required>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">Şifre</label>
+
+                        <input
+                            type="text"
+                            name="sifre"
+                            class="form-control"
+                            value="{{ sube[3] }}"
+                            required>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">Yetkili</label>
+
+                        <input
+                            type="text"
+                            name="yetkili"
+                            class="form-control"
+                            value="{{ sube[4] }}">
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">Telefon</label>
+
+                        <input
+                            type="text"
+                            name="telefon"
+                            class="form-control"
+                            value="{{ sube[5] }}">
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">E-Posta</label>
+
+                        <input
+                            type="email"
+                            name="eposta"
+                            class="form-control"
+                            value="{{ sube[6] }}">
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">İl</label>
+
+                        <input
+                            type="text"
+                            name="il"
+                            class="form-control"
+                            value="{{ sube[7] }}">
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">İlçe</label>
+
+                        <input
+                            type="text"
+                            name="ilce"
+                            class="form-control"
+                            value="{{ sube[8] }}">
+
+                    </div>
+
+                    <div class="col-12 mb-3">
+
+                        <label class="form-label">Adres</label>
+
+                        <textarea
+                            name="adres"
+                            class="form-control"
+                            rows="4">{{ sube[9] }}</textarea>
+
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+
+                        <label class="form-label">Durum</label>
+
+                        <select
+                            name="durum"
+                            class="form-select">
+
+                            <option value="Aktif" {% if sube[10] == "Aktif" %}selected{% endif %}>Aktif</option>
+
+                            <option value="Pasif" {% if sube[10] == "Pasif" %}selected{% endif %}>Pasif</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+    <label class="form-label">Üretim Günü</label>
+
+    <select
+        name="uretim_gunu"
+        class="form-select">
+
+        <option value="Pazartesi" {% if sube[11]=="Pazartesi" %}selected{% endif %}>Pazartesi</option>
+        <option value="Salı" {% if sube[11]=="Salı" %}selected{% endif %}>Salı</option>
+        <option value="Çarşamba" {% if sube[11]=="Çarşamba" %}selected{% endif %}>Çarşamba</option>
+        <option value="Perşembe" {% if sube[11]=="Perşembe" %}selected{% endif %}>Perşembe</option>
+        <option value="Cuma" {% if sube[11]=="Cuma" %}selected{% endif %}>Cuma</option>
+        <option value="Cumartesi" {% if sube[11]=="Cumartesi" %}selected{% endif %}>Cumartesi</option>
+
+    </select>
+
+</div>
+
+
+<div class="col-md-6 mb-3">
+
+    <label class="form-label">Sevkiyat Günü</label>
+
+    <select
+        name="sevkiyat_gunu"
+        class="form-select">
+
+        <option value="Pazartesi" {% if sube[12]=="Pazartesi" %}selected{% endif %}>Pazartesi</option>
+        <option value="Salı" {% if sube[12]=="Salı" %}selected{% endif %}>Salı</option>
+        <option value="Çarşamba" {% if sube[12]=="Çarşamba" %}selected{% endif %}>Çarşamba</option>
+        <option value="Perşembe" {% if sube[12]=="Perşembe" %}selected{% endif %}>Perşembe</option>
+        <option value="Cuma" {% if sube[12]=="Cuma" %}selected{% endif %}>Cuma</option>
+        <option value="Cumartesi" {% if sube[12]=="Cumartesi" %}selected{% endif %}>Cumartesi</option>
+
+    </select>
+
+</div>
+
+
+<div class="col-md-6 mb-3">
+
+    <label class="form-label">Sevkiyat Saati</label>
+
+    <input
+        type="time"
+        name="sevkiyat_saati"
+        class="form-control"
+        value="{{ sube[13] }}">
+
+</div>
+
+
+<div class="col-md-6 mb-3">
+
+    <label class="form-label">Tahmini Teslim Süresi</label>
+
+    <select
+        name="teslim_suresi"
+        class="form-select">
+
+        <option value="Aynı Gün" {% if sube[14]=="Aynı Gün" %}selected{% endif %}>Aynı Gün</option>
+        <option value="+1 Gün" {% if sube[14]=="+1 Gün" %}selected{% endif %}>+1 Gün</option>
+        <option value="+2 Gün" {% if sube[14]=="+2 Gün" %}selected{% endif %}>+2 Gün</option>
+        <option value="+3 Gün" {% if sube[14]=="+3 Gün" %}selected{% endif %}>+3 Gün</option>
+
+    </select>
+
+</div>
+
+                </div>
+
+                <a href="/subeler" class="btn btn-secondary">
+
+                    İptal
+
+                </a>
+
+                <button
+                    type="submit"
+                    class="btn btn-warning">
+
+                    Güncelle
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

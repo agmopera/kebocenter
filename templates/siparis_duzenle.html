@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Sipariş Düzenle</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <h2>Sipariş Düzenle</h2>
+
+    <hr>
+
+    <div class="card p-3 mb-4">
+
+        <h5>Sipariş Bilgileri</h5>
+
+        <p>
+            <strong>Sipariş No :</strong>
+            {{ siparis[1] }}
+        </p>
+
+        <p>
+            <strong>Şube :</strong>
+            {{ siparis[2] }}
+        </p>
+
+        <p>
+            <strong>Tarih :</strong>
+            {{ siparis[3] }}
+        </p>
+
+        <p>
+            <strong>Durum :</strong>
+            {{ siparis[4] }}
+        </p>
+
+    </div>
+
+
+    <form method="POST">
+
+        <div class="card p-3">
+
+            <h5>Ürünler</h5>
+
+            <table class="table table-bordered align-middle">
+
+                <thead class="table-dark">
+
+                    <tr>
+
+                        <th>Ürün</th>
+
+                        <th width="180">Miktar</th>
+
+                        <th width="100">İşlem</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for detay in detaylar %}
+
+                    <tr>
+
+                        <td>
+
+                            {{ detay[2] }}
+
+                        </td>
+
+                        <td>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                min="0"
+                                step="1"
+                                name="miktar_{{ detay[0] }}"
+                                value="{{ detay[3] }}">
+
+                        </td>
+
+                        <td class="text-center">
+
+                            <a
+                                href="/siparis-detay-sil/{{ detay[0] }}/{{ siparis[0] }}"
+                                class="btn btn-danger btn-sm"
+                                onclick="return confirm('Bu ürünü silmek istiyor musunuz?')">
+
+                                Sil
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+            <div class="alert alert-info">
+
+                <strong>Toplam Koli :</strong>
+
+                {{ toplam }}
+
+            </div>
+
+
+            <hr>
+
+            <h5>Yeni Ürün Ekle</h5>
+
+            <div class="row">
+
+                <div class="col-md-7">
+
+                    <select
+                        name="yeni_urun"
+                        class="form-select">
+
+                        {% for urun in urunler %}
+
+                        <option value="{{ urun[0] }}">
+
+                            {{ urun[2] }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <input
+                        type="number"
+                        name="yeni_miktar"
+                        class="form-control"
+                        value="1"
+                        min="1">
+
+                </div>
+
+            </div>
+
+            <br>
+
+            <div class="d-flex gap-2">
+
+                <button
+                    type="submit"
+                    class="btn btn-success">
+
+                    Kaydet
+
+                </button>
+
+                <a
+                    href="/siparis-detay/{{ siparis[0] }}"
+                    class="btn btn-secondary">
+
+                    Vazgeç
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+</body>
+</html>
