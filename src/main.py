@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, abort
+print("MAIN DOSYASI ÇALIŞTI")
 from datetime import datetime
 import json
 import random
@@ -60,6 +61,10 @@ app = Flask(
     static_folder="../static"
 )
 
+@app.before_request
+def test():
+    print("METHOD:", request.method, "URL:", request.path)
+
 app.secret_key = "siparis_sistemi_2026"
 
 
@@ -100,54 +105,57 @@ def admin_kontrol():
 # LOGIN
 # ==========================
 
-@app.route("/")
-def home():
-    return render_template("login.html")
 
 
-
-@app.route("/login", methods=["POST"])
+@app.route("/", methods=["GET", "POST"])
 def login():
 
-    kullanici_adi = request.form.get("sube")
-    sifre = request.form.get("sifre")
+    print("LOGIN FONKSİYONU ÇALIŞTI")
 
-    # ADMIN GİRİŞİ
-    if kullanici_adi == "admin" and sifre == "admin123":
+    if request.method == "POST":
 
-        session.clear()
+        kullanici_adi = request.form["kullanici"]
+        sifre = request.form["sifre"]
 
-        session["giris"] = True
-        session["yetki"] = "admin"
-        session["sube_id"] = 0
-        session["sube_adi"] = "ADMIN"
+        print("GELEN:", kullanici_adi, sifre)
 
-        return redirect("/dashboard")
+        if kullanici_adi == "admin" and sifre == "admin123":
 
+            session.clear()
 
-    kullanici = login_kontrol(
-        kullanici_adi,
-        sifre
-    )
+            session["giris"] = True
+            session["yetki"] = "admin"
+            session["sube_id"] = 0
+            session["sube_adi"] = "ADMIN"
 
-
-    if kullanici:
-
-        session.clear()
-
-        session["giris"] = True
-        session["yetki"] = "sube"
-
-        session["sube_id"] = kullanici[0]
-        session["sube_adi"] = kullanici[1]
-
-        return redirect("/dashboard")
+            return redirect("/dashboard")
 
 
-    return """
-    <h2>Kullanıcı adı veya şifre hatalı.</h2>
-    <a href="/">Tekrar Dene</a>
-    """
+        kullanici = login_kontrol(
+            kullanici_adi,
+            sifre
+        )
+
+
+        if kullanici:
+
+            session.clear()
+
+            session["giris"] = True
+            session["yetki"] = "sube"
+            session["sube_id"] = kullanici[0]
+            session["sube_adi"] = kullanici[1]
+
+            return redirect("/dashboard")
+
+
+        return """
+        <h2>Kullanıcı adı veya şifre hatalı.</h2>
+        <a href="/">Tekrar Dene</a>
+        """
+
+
+    return render_template("login.html")
 
 
 # ==========================
@@ -611,10 +619,8 @@ def siparis_onayla(id):
     return redirect("/siparisler")
     
 
-@app.route(
-    "/siparis-duzenle/<int:id>",
-    methods=["GET","POST"]
-)
+
+
 @app.route("/siparis-duzenle/<int:id>", methods=["GET", "POST"])
 def siparis_duzenle(id):
 
@@ -956,10 +962,20 @@ def excel_rapor():
 
 import os
 
+print("Login fonksiyonu =", login)
+print("Endpoint =", app.view_functions["login"])
+
+print("\n===== ROUTES =====")
+
+for rule in app.url_map.iter_rules():
+    print(rule, rule.methods)
+
+print("==================\n")
+
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000)),
-        debug=False
+        port=5000,
+        debug=True
     )
-    
+
