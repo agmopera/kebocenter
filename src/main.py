@@ -352,6 +352,48 @@ def urunler():
         urunler=liste
     )
 
+@app.route("/finans")
+def finans():
+
+    sonuc = admin_kontrol()
+
+    if sonuc:
+        return sonuc
+
+    return render_template("finans.html")
+
+
+@app.route("/raporlar")
+def raporlar():
+
+    sonuc = admin_kontrol()
+
+    if sonuc:
+        return sonuc
+
+    return render_template("raporlar.html")
+
+
+@app.route("/ai")
+def ai():
+
+    sonuc = admin_kontrol()
+
+    if sonuc:
+        return sonuc
+
+    return render_template("ai.html")
+
+
+@app.route("/stoklar")
+def stoklar():
+
+    sonuc = admin_kontrol()
+
+    if sonuc:
+        return sonuc
+
+    return render_template("stoklar.html")
 
 
 
