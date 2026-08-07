@@ -5,14 +5,19 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 db = os.path.join(BASE_DIR, "siparis.db")
 
-print(db)
+print("DB =", db)
 
 conn = sqlite3.connect(db)
-
 cur = conn.cursor()
 
-cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+print("\n===== URUNLER TABLOSU =====")
+cur.execute("PRAGMA table_info(urunler)")
+for satir in cur.fetchall():
+    print(satir)
 
-print(cur.fetchall())
+print("\n===== SUBELER TABLOSU =====")
+cur.execute("PRAGMA table_info(subeler)")
+for satir in cur.fetchall():
+    print(satir)
 
 conn.close()

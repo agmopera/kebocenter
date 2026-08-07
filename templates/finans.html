@@ -1,1 +1,205 @@
-<h2>Faz 2 Çalışmasında Eklenecektir</h2>
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Finans Yönetimi</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">
+        💰 Finans Yönetimi
+    </h2>
+
+    <!-- ====================================== -->
+    <!-- ÜRÜN FİYATLARI -->
+    <!-- ====================================== -->
+
+    <div class="card shadow-sm mb-5">
+
+        <div class="card-header bg-success text-white">
+
+            <h5 class="mb-0">
+                Ürün Fiyatları
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST">
+
+                <input
+                    type="hidden"
+                    name="islem"
+                    value="fiyatlar">
+
+                <table class="table table-striped table-hover align-middle">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Ürün</th>
+
+                            <th width="150">Birim</th>
+
+                            <th width="180">Fiyat (TL)</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    {% for urun in urunler %}
+
+                        <tr>
+
+                            <td>{{ urun[1] }}</td>
+
+                            <td>{{ urun[2] }}</td>
+
+                            <td>
+
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="form-control"
+                                    name="fiyat_{{ urun[0] }}"
+                                    value="{{ urun[3] }}">
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+                <div class="text-end">
+
+                    <button
+                        type="submit"
+                        class="btn btn-success">
+
+                        💾 Fiyatları Kaydet
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================== -->
+    <!-- ŞUBE LİMİTLERİ -->
+    <!-- ====================================== -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-header bg-primary text-white">
+
+            <h5 class="mb-0">
+                Şube Limitleri
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST">
+
+                <input
+                    type="hidden"
+                    name="islem"
+                    value="limitler">
+
+                <table class="table table-striped table-hover align-middle">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Şube</th>
+
+                            <th width="220">Limit (TL)</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    {% for sube in subeler %}
+
+                        <tr>
+
+                            <td>{{ sube[1] }}</td>
+
+                            <td>
+
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="form-control"
+                                    name="limit_{{ sube[0] }}"
+                                    value="{{ sube[2] }}">
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+                <div class="text-end">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                        💾 Limitleri Kaydet
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
+
+<div class="mb-3">
+
+    <a href="/dashboard" class="btn btn-secondary">
+
+        ← Dashboard'a Dön
+
+    </a>
+
+</div>

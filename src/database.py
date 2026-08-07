@@ -7,6 +7,7 @@ DB_NAME = os.path.join(BASE_DIR, "siparis.db")
 
 
 def connect_database():
+    print("DB =", os.path.abspath(DB_NAME))
     return sqlite3.connect(DB_NAME)
 
 
@@ -50,6 +51,12 @@ def create_tables():
         cursor.execute("ALTER TABLE subeler ADD COLUMN uretim_gunu TEXT")
     except:
         pass
+        
+    try:
+        cursor.execute("""ALTER TABLE subeler ADD COLUMN limit_tutari REAL DEFAULT 0""")
+    except:
+        pass
+
 
     try:
         cursor.execute("ALTER TABLE subeler ADD COLUMN sevkiyat_gunu TEXT")
@@ -97,6 +104,13 @@ def create_tables():
         """)
     except:
         pass
+
+    try:
+        cursor.execute("""ALTER TABLE urunler ADD COLUMN fiyat REAL DEFAULT 0""")
+        print("✔ fiyat sütunu eklendi")
+    except Exception as e:
+        print("❌ fiyat:", e)
+
 
     try:
         cursor.execute("""
@@ -629,7 +643,7 @@ def update_urun(id, urun_kodu, urun_adi, kategori, birim,palet_kapasitesi,urun_t
             urun_adi=?,
             kategori=?,
             birim=?,
-            durum=?
+            durum=?,
             palet_kapasitesi=?,
             urun_tipi=?,
             koli_agirligi=?,
@@ -1058,7 +1072,9 @@ def get_tum_urunler():
             urun_adi,
             kategori,
             birim,
-            palet_kapasitesi
+            palet_kapasitesi,
+            fiyat,
+            urun_tipi
         FROM urunler
         WHERE durum='Aktif'
         ORDER BY urun_adi
@@ -1118,3 +1134,113 @@ def get_siparis_miktari(sube_id, urun_id):
     conn.close()
 
     return sonuc
+
+# ==================================================
+# FİNANS
+# ==================================================
+
+def get_finans_urunleri():
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            urun_adi,
+            birim,
+            fiyat
+        FROM urunler
+        ORDER BY urun_adi
+    """)
+
+    sonuc = cursor.fetchall()
+
+    conn.close()
+
+    return sonuc
+
+
+def fiyat_guncelle(id, fiyat):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE urunler
+        SET fiyat=?
+        WHERE id=?
+    """, (
+        fiyat,
+        id
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+def get_finans_subeleri():
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            sube_adi,
+            limit_tutari
+        FROM subeler
+        ORDER BY sube_adi
+    """)
+
+    sonuc = cursor.fetchall()
+
+    conn.close()
+
+    return sonuc
+
+
+def limit_guncelle(id, limit_tutari):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE subeler
+        SET limit_tutari=?
+        WHERE id=?
+    """, (
+        limit_tutari,
+        id
+    ))
+
+    conn.commit()
+    conn.close()
+
+def get_sube_limit(sube_id):
+
+    conn = connect_database()
+
+    cursor = conn.cursor()
+
+
+    cursor.execute("""
+        SELECT limit_tutari
+        FROM subeler
+        WHERE id=?
+    """, (sube_id,))
+
+
+    sonuc = cursor.fetchone()
+
+
+    conn.close()
+
+
+    if sonuc and sonuc[0]:
+
+        return sonuc[0]
+
+
+    return 0
+    

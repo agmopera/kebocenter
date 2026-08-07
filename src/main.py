@@ -41,6 +41,11 @@ from database import (
     siparis_durum_guncelle,
     siparis_gecmisi_ekle,
     get_siparis_gecmisi,
+    get_finans_urunleri,
+    get_finans_subeleri,
+    fiyat_guncelle,
+    limit_guncelle,
+    get_sube_limit,
     siparise_urun_ekle,
     sipariste_urun_var_mi,
     toplam_koli,
@@ -352,15 +357,77 @@ def urunler():
         urunler=liste
     )
 
-@app.route("/finans")
+@app.route("/finans", methods=["GET", "POST"])
 def finans():
 
     sonuc = admin_kontrol()
-
     if sonuc:
         return sonuc
 
-    return render_template("finans.html")
+    if request.method == "POST":
+
+        islem = request.form.get("islem")
+
+        # ==========================
+        # FİYATLARI KAYDET
+        # ==========================
+
+        if islem == "fiyatlar":
+
+            urunler = get_finans_urunleri()
+
+            for urun in urunler:
+
+                fiyat = request.form.get(
+                    f"fiyat_{urun[0]}",
+                    "0"
+                )
+
+                try:
+                    fiyat = float(fiyat)
+                except:
+                    fiyat = 0
+
+                fiyat_guncelle(
+                    urun[0],
+                    fiyat
+                )
+
+        # ==========================
+        # LİMİTLERİ KAYDET
+        # ==========================
+
+        elif islem == "limitler":
+
+            subeler = get_finans_subeleri()
+
+            for sube in subeler:
+
+                limit = request.form.get(
+                    f"limit_{sube[0]}",
+                    "0"
+                )
+
+                try:
+                    limit = float(limit)
+                except:
+                    limit = 0
+
+                limit_guncelle(
+                    sube[0],
+                    limit
+                )
+
+        return redirect("/finans")
+
+    urunler = get_finans_urunleri()
+    subeler = get_finans_subeleri()
+
+    return render_template(
+        "finans.html",
+        urunler=urunler,
+        subeler=subeler
+    )
 
 
 @app.route("/raporlar")
@@ -546,7 +613,6 @@ def siparisler():
 
 @app.route("/siparis-detay/<int:id>")
 def siparis_detay(id):
-
 
     if "giris" not in session:
         return redirect("/")
@@ -829,7 +895,9 @@ def yeni_siparis():
 
 
 
+
     if request.method == "POST":
+
 
 
         # ADMIN istediği şubeyi seçebilir
@@ -892,6 +960,7 @@ def yeni_siparis():
 
 
     # ADMIN bütün şubeleri görür
+
     if session["yetki"] == "admin":
 
         subeler = get_subeler()
@@ -907,12 +976,27 @@ def yeni_siparis():
         ]
 
 
+    urunler = get_tum_urunler()
 
-    urunler = get_urunler()
 
 
-    bugun = datetime.now().strftime(
-        "%Y-%m-%d"
+    # ==============================
+    # ŞUBE FİNANS LİMİTİ
+    # ==============================
+
+    if session["yetki"] == "admin":
+
+        secili_sube = subeler[0][0]
+
+
+    else:
+
+        secili_sube = session["sube_id"]
+
+
+
+    limit = get_sube_limit(
+        secili_sube
     )
 
 
@@ -921,9 +1005,27 @@ def yeni_siparis():
         "yeni_siparis.html",
         subeler=subeler,
         urunler=urunler,
-        bugun=bugun
+        limit=limit
+    )
+# ==================================
+# ŞUBE LİMİT GETİRME (AJAX)
+# ==================================
+
+@app.route("/get-sube-limit/<int:sube_id>")
+def get_sube_limit_ajax(sube_id):
+
+    if "giris" not in session:
+        return {"limit":0}
+
+
+    limit = get_sube_limit(
+        sube_id
     )
 
+
+    return {
+        "limit": limit
+    }
 
 # ==========================
 # UYGULAMA BAŞLAT
@@ -1013,6 +1115,9 @@ for rule in app.url_map.iter_rules():
     print(rule, rule.methods)
 
 print("==================\n")
+
+# Veritabanını oluştur / güncelle
+create_tables()
 
 if __name__ == "__main__":
     app.run(

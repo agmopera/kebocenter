@@ -3,555 +3,558 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yeni Sipariş</title>
 
-<title>Yeni Sipariş</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+
+        body{
+            background:#f3f5f7;
+        }
+
+        .card{
+            border:none;
+            border-radius:12px;
+            box-shadow:0 2px 10px rgba(0,0,0,.08);
+        }
+
+        .baslik{
+            font-size:28px;
+            font-weight:bold;
+        }
+
+        .table td{
+            vertical-align:middle;
+        }
+
+        .toplamKart{
+            font-size:18px;
+            font-weight:bold;
+        }
+
+        .progress{
+            height:26px;
+        }
+
+    </style>
 
 </head>
 
-
-<body class="bg-light">
-
+<body>
 
 <div class="container mt-4">
 
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-<div class="card shadow">
+        <div class="baslik">
+            Yeni Sipariş
+        </div>
 
+        <a href="/siparisler" class="btn btn-secondary">
+            Siparişlere Dön
+        </a>
 
-<div class="card-header bg-danger text-white">
+    </div>
 
-<h3>
-Yeni Sipariş Oluştur
-</h3>
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <h5 class="mb-3">
+                Şube Bilgileri
+            </h5>
+
+            <form method="POST" id="siparisForm">
+
+                {% if session["yetki"]=="admin" %}
+
+                <select
+                    class="form-select"
+                    name="sube_id"
+                    id="subeSec">
+
+                    {% for sube in subeler %}
+
+                    <option value="{{ sube[0] }}">
+                        {{ sube[1] }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+                {% else %}
+
+                <input
+                    type="text"
+                    class="form-control"
+                    value="{{ session['sube_adi'] }}"
+                    readonly>
+
+                <input
+                    type="hidden"
+                    name="sube_id"
+                    value="{{ session['sube_id'] }}">
+
+                {% endif %}
+
+        </div>
+
+    </div>
+
+    <div class="row mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card">
+
+                <div class="card-body text-center">
+
+                    <h6>Toplam Tutar</h6>
+
+                    <h3 id="toplamTutar">
+                        0 ₺
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card">
+
+                <div class="card-body text-center">
+
+                    <h6>Limit</h6>
+
+                    <h3 id="limitTutari">
+                        {{ limit }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card">
+
+                <div class="card-body text-center">
+
+                    <h6>Kalan Limit</h6>
+
+                    <h3 id="kalanLimit">
+                        {{ limit }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card">
+
+                <div class="card-body text-center">
+
+                    <h6>Durum</h6>
+
+                    <h3 id="limitDurumu">
+                        Uygun
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="row mb-4">
+
+        <div class="col-md-6">
+
+            <div class="card">
+
+                <div class="card-body">
+
+                    <h5>❄️ Donuk Palet</h5>
+
+                    <div class="progress">
+
+                        <div
+                            id="donukBar"
+                            class="progress-bar bg-primary"
+                            style="width:0%;">
+
+                            0%
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+
+            <div class="card">
+
+                <div class="card-body">
+
+                    <h5>🧊 Soğuk Palet</h5>
+
+                    <div class="progress">
+
+                        <div
+                            id="sogukBar"
+                            class="progress-bar bg-success"
+                            style="width:0%;">
+
+                            0%
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- BÖLÜM 2 BURAYA GELECEK -->
+     <div class="card mb-4">
+
+    <div class="card-header">
+
+        <h5 class="mb-0">
+            Ürün Ekle
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Ürün
+                </label>
+
+                <select
+                    id="urunSec"
+                    class="form-select">
+
+                    <option value="">
+                        Ürün Seçiniz
+                    </option>
+
+                    {% for urun in urunler %}
+
+                    <option
+                        value="{{ urun[0] }}"
+                        data-ad="{{ urun[1] }}"
+                        data-palet="{{ urun[4] }}"
+                        data-fiyat="{{ urun[5] }}"
+                        data-tip="{{ urun[6] }}">
+
+                        {{ urun[1] }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <div class="col-md-2">
+
+                <label class="form-label">
+                    Miktar
+                </label>
+
+                <input
+                    type="number"
+                    id="miktar"
+                    class="form-control"
+                    value="1"
+                    min="1">
+
+            </div>
+
+            <div class="col-md-2 d-grid">
+
+                <label class="form-label">
+                    &nbsp;
+                </label>
+
+                <button
+                    type="button"
+                    id="ekleBtn"
+                    class="btn btn-success">
+
+                    Ürün Ekle
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 
 
 
-<div class="card-body">
+<div class="card">
 
+    <div class="card-header">
 
-<form id="siparisForm" method="POST">
+        <h5 class="mb-0">
+            Sipariş Listesi
+        </h5>
 
+    </div>
 
+    <div class="card-body">
 
-<div class="row">
+        <div class="table-responsive">
 
+            <table
+                class="table table-bordered table-hover align-middle">
 
-<div class="col-md-5">
+                <thead class="table-dark">
 
+                    <tr>
 
-<label class="form-label">
-Ürün
-</label>
+                        <th width="5%">
+                            #
+                        </th>
 
+                        <th width="35%">
+                            Ürün
+                        </th>
 
-<select
-id="urun"
-class="form-select">
+                        <th width="10%">
+                            Tip
+                        </th>
 
+                        <th width="10%">
+                            Palet
+                        </th>
 
-<option value="">
-Ürün Seçiniz
-</option>
+                        <th width="10%">
+                            Fiyat
+                        </th>
 
+                        <th width="10%">
+                            Miktar
+                        </th>
 
+                        <th width="10%">
+                            Tutar
+                        </th>
 
-{% for u in urunler %}
+                        <th width="10%">
+                            İşlem
+                        </th>
 
+                    </tr>
 
-<option
-value="{{ u[0] }}"
-data-kapasite="{{ u[6] }}"
-data-tip="{{ u[7] }}">
+                </thead>
 
-{{ u[2] }} - {{ u[7] }}
+                <tbody id="siparisBody">
 
-</option>
+                </tbody>
 
+            </table>
 
-{% endfor %}
+        </div>
 
-
-</select>
-
+    </div>
 
 </div>
 
-
-
-
-<div class="col-md-3">
-
-
-<label class="form-label">
-Miktar
-</label>
 
 
 <input
-
-type="number"
-
-id="miktar"
-
-class="form-control"
-
-min="1">
-
-
-</div>
+    type="hidden"
+    id="urunler_json"
+    name="urunler_json">
 
 
 
+<div class="text-end mt-4">
 
-<div class="col-md-2 d-flex align-items-end">
+    <button
+        type="submit"
+        class="btn btn-lg btn-primary">
 
+        Siparişi Kaydet
 
-<button
-
-type="button"
-
-id="ekleBtn"
-
-class="btn btn-success w-100">
-
-+ Ekle
-
-</button>
-
+    </button>
 
 </div>
-
-
-</div>
-
-
-
-
-<hr>
-
-
-
-<!-- PALET DURUMU -->
-
-
-<div class="row mb-3">
-
-
-
-<div class="col-md-6">
-
-
-<div class="card shadow-sm">
-
-
-<div class="card-header bg-primary text-white">
-
-❄️ Donuk Palet Doluluk
-
-</div>
-
-
-
-<div class="card-body">
-
-
-<div class="progress" style="height:30px">
-
-
-<div
-
-id="donukBar"
-
-class="progress-bar"
-
-style="width:0%">
-
-0%
-
-</div>
-
-
-</div>
-
-
-
-<h5 class="mt-3"
-
-id="donukBilgi">
-
-0.00 Palet
-
-</h5>
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-<div class="col-md-6">
-
-
-<div class="card shadow-sm">
-
-
-<div class="card-header bg-info text-white">
-
-🧊 Soğuk Palet Doluluk
-
-</div>
-
-
-
-<div class="card-body">
-
-
-<div class="progress" style="height:30px">
-
-
-<div
-
-id="sogukBar"
-
-class="progress-bar"
-
-style="width:0%">
-
-0%
-
-</div>
-
-
-</div>
-
-
-
-<h5 class="mt-3"
-
-id="sogukBilgi">
-
-0.00 Palet
-
-</h5>
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-<p>
-
-Toplam Koli:
-
-<b id="toplamKoli">
-
-0
-
-</b>
-
-</p>
-
-
-
-
-<hr>
-
-
-
-
-<h5>
-
-Eklenen Ürünler
-
-</h5>
-
-
-
-
-<table class="table table-bordered">
-
-
-<thead class="table-dark">
-
-
-<tr>
-
-
-<th>
-Ürün
-</th>
-
-
-<th>
-Miktar
-</th>
-
-
-<th>
-İşlem
-</th>
-
-
-</tr>
-
-
-</thead>
-
-
-
-<tbody id="urunTablo">
-
-
-<tr>
-
-<td colspan="3"
-
-class="text-center text-muted">
-
-Henüz ürün eklenmedi.
-
-</td>
-
-</tr>
-
-
-</tbody>
-
-
-
-</table>
-
-
-
-
-
-<div class="mt-4">
-
-
-<a href="/siparisler"
-
-class="btn btn-secondary">
-
-İptal
-
-</a>
-
-
-
-<input
-
-type="hidden"
-
-id="urunler_json"
-
-name="urunler_json">
-
-
-
-<button
-
-type="submit"
-
-class="btn btn-danger float-end">
-
-Siparişi Kaydet
-
-</button>
-
-
-
-</div>
-
-
-
-
-</form>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
 
 <script>
 
+let siparis = [];
 
-let urunler=[];
+const body = document.getElementById("siparisBody");
+const jsonInput = document.getElementById("urunler_json");
 
+const toplamTutar = document.getElementById("toplamTutar");
+const kalanLimit = document.getElementById("kalanLimit");
+const limitDurumu = document.getElementById("limitDurumu");
 
-
-const ekleBtn=document.getElementById("ekleBtn");
-
-const urunSec=document.getElementById("urun");
-
-const miktar=document.getElementById("miktar");
-
-const tablo=document.getElementById("urunTablo");
+const limit = Number("{{ limit }}");
 
 
+document
+.getElementById("ekleBtn")
+.addEventListener(
+    "click",
+    urunEkle
+);
 
 
 
-ekleBtn.addEventListener("click",function(){
+function urunEkle(){
+
+    const secim =
+        document.getElementById("urunSec");
+
+
+    if(secim.value==""){
+
+        alert("Ürün seçiniz.");
+
+        return;
+
+    }
+
+
+    const option =
+        secim.options[
+            secim.selectedIndex
+        ];
+
+
+    const id =
+        Number(option.value);
 
 
 
-if(
-urunSec.value=="" ||
-miktar.value==""
-){
+    if(
+        siparis.some(
+            x=>x.id===id
+        )
+    ){
+
+        alert("Bu ürün zaten ekli.");
+
+        return;
+
+    }
 
 
-alert("Ürün ve miktar giriniz.");
 
-return;
+    const miktar =
+        Number(
+            document.getElementById("miktar").value
+        );
+
+
+    siparis.push({
+
+        id:id,
+
+        ad:
+        option.dataset.ad,
+
+        tip:
+        option.dataset.tip,
+
+        fiyat:
+        Number(option.dataset.fiyat),
+
+        palet:
+        Number(option.dataset.palet),
+
+        miktar:miktar
+
+    });
+
+
+
+    tabloyuGuncelle();
 
 }
 
 
 
 
-let id=urunSec.value;
+function tabloyuGuncelle(){
+
+
+    body.innerHTML="";
+
+
+    siparis.forEach(function(urun,index){
+
+
+        let tutar =
+        urun.fiyat *
+        urun.miktar;
 
 
 
-let ad=
-urunSec.options[
-urunSec.selectedIndex
-].text;
-
-
-
-let adet=
-Number(miktar.value);
-
-
-
-let kapasite=
-Number(
-urunSec.options[
-urunSec.selectedIndex
-].dataset.kapasite
-);
-
-
-
-let tip=
-urunSec.options[
-urunSec.selectedIndex
-].dataset.tip;
-
-
-
-urunler.push({
-
-id:id,
-
-ad:ad,
-
-miktar:adet,
-
-kapasite:kapasite,
-
-tip:tip
-
-});
-
-
-console.log("Ürün tipi:", tip);
-
-
-
-tabloyuYenile();
-
-
-
-urunSec.selectedIndex=0;
-
-miktar.value="";
-
-
-
-});
-
-
-
-
-
-
-function tabloyuYenile(){
-
-
-
-tablo.innerHTML="";
-
-
-
-urunler.forEach(function(u,index){
-
-
-
-tablo.innerHTML += `
-
+        body.innerHTML += `
 
 <tr>
 
-<td>
+<td>${index+1}</td>
 
-${u.ad}
+<td>${urun.ad}</td>
 
-</td>
+<td>${urun.tip}</td>
 
+<td>${urun.palet}</td>
 
-<td>
+<td>${urun.fiyat} ₺</td>
 
-${u.miktar}
+<td>${urun.miktar}</td>
 
-</td>
+<td>${tutar} ₺</td>
 
 
 <td>
 
 <button
-
 type="button"
-
 class="btn btn-danger btn-sm"
-
 onclick="sil(${index})">
 
 Sil
@@ -563,142 +566,22 @@ Sil
 
 </tr>
 
-
 `;
 
-
-
-});
-
-
-
-paletHesapla();
-
-
-}
-
-
-
-
-
-
-
-function paletHesapla(){
-
-    let donukPalet = 0;
-    let sogukPalet = 0;
-    let toplamKoli = 0;
-
-
-    urunler.forEach(function(u){
-
-
-        let palet = 0;
-
-
-        if(u.kapasite > 0){
-
-            palet = u.miktar / u.kapasite;
-
-        }
-
-
-        console.log(
-            u.ad,
-            "TIP:",
-            u.tip,
-            "PALET:",
-            palet
-        );
-
-
-        if(u.tip == "Soğuk"){
-
-            sogukPalet += palet;
-
-        }
-        else{
-
-            donukPalet += palet;
-
-        }
-
-
-        toplamKoli += u.miktar;
 
 
     });
 
 
 
-    let donukYuzde =
-        Math.round(
-            (donukPalet % 1) * 100
-        );
+    jsonInput.value =
+    JSON.stringify(siparis);
 
 
-    if(donukPalet < 1){
-
-        donukYuzde =
-            Math.round(
-                donukPalet * 100
-            );
-
-    }
-
-
-
-    let sogukYuzde =
-        Math.round(
-            (sogukPalet % 1) * 100
-        );
-
-
-    if(sogukPalet < 1){
-
-        sogukYuzde =
-            Math.round(
-                sogukPalet * 100
-            );
-
-    }
-
-
-
-    document.getElementById("donukBar").style.width =
-        donukYuzde + "%";
-
-
-    document.getElementById("donukBar").innerHTML =
-        donukYuzde + "%";
-
-
-    document.getElementById("donukBilgi").innerHTML =
-        donukPalet.toFixed(2) + " Palet";
-
-
-
-    document.getElementById("sogukBar").style.width =
-        sogukYuzde + "%";
-
-
-    document.getElementById("sogukBar").innerHTML =
-        sogukYuzde + "%";
-
-
-    document.getElementById("sogukBilgi").innerHTML =
-        sogukPalet.toFixed(2) + " Palet";
-
-
-
-    document.getElementById("toplamKoli").innerHTML =
-        toplamKoli;
+    hesapla();
 
 
 }
-
-
-
 
 
 
@@ -706,51 +589,220 @@ function paletHesapla(){
 function sil(index){
 
 
-urunler.splice(index,1);
+    siparis.splice(index,1);
 
 
-tabloyuYenile();
-
-
-}
-
-
-
-
-
-
-
-document
-.getElementById("siparisForm")
-.addEventListener(
-"submit",
-function(e){
-
-
-
-if(urunler.length==0){
-
-
-alert("Lütfen en az bir ürün ekleyiniz.");
-
-e.preventDefault();
-
-return;
+    tabloyuGuncelle();
 
 
 }
 
 
 
-document.getElementById("urunler_json").value=
 
-JSON.stringify(urunler);
+
+function hesapla(){
+
+
+let toplam = 0;
+
+
+let donukPalet = 0;
+
+let sogukPalet = 0;
+
+
+
+siparis.forEach(function(urun){
+
+
+    let tutar =
+    urun.fiyat *
+    urun.miktar;
+
+
+    toplam += tutar;
+
+
+
+    /*
+       Palet hesabı
+
+       miktar / palet kapasitesi
+    */
+
+
+    let palet =
+    urun.miktar /
+    urun.palet;
+
+
+
+    if(
+        urun.tip === "Donuk"
+    ){
+
+        donukPalet += palet;
+
+    }
+
+
+
+    if(
+        urun.tip === "Soğuk"
+    ){
+
+        sogukPalet += palet;
+
+    }
 
 
 
 });
 
 
+
+
+/*
+ Finans
+*/
+
+
+toplamTutar.innerHTML =
+
+toplam.toLocaleString(
+"tr-TR"
+)
+
++" ₺";
+
+
+
+let kalan =
+limit-toplam;
+
+
+
+kalanLimit.innerHTML =
+
+kalan.toLocaleString(
+"tr-TR"
+)
+
++" ₺";
+
+
+
+
+
+/*
+ Palet gösterimi
+*/
+
+
+let donukYuzde =
+Math.min(
+donukPalet*100,
+100
+);
+
+
+
+let sogukYuzde =
+Math.min(
+sogukPalet*100,
+100
+);
+
+
+
+let donukBar =
+document.getElementById(
+"donukBar"
+);
+
+
+
+let sogukBar =
+document.getElementById(
+"sogukBar"
+);
+
+
+
+
+donukBar.style.width =
+donukYuzde+"%";
+
+
+donukBar.innerHTML =
+
+donukPalet.toFixed(2)
++" Palet";
+
+
+
+
+sogukBar.style.width =
+sogukYuzde+"%";
+
+
+sogukBar.innerHTML =
+
+sogukPalet.toFixed(2)
++" Palet";
+
+
+
+}
+
+const subeSec =
+document.getElementById("subeSec");
+
+
+if(subeSec){
+
+    subeSec.addEventListener(
+        "change",
+        function(){
+
+            let sube_id=this.value;
+
+
+            fetch(
+                "/get-sube-limit/"+sube_id
+            )
+
+            .then(response => response.json())
+
+            .then(data => {
+
+
+                let yeniLimit =
+                Number(data.limit);
+
+
+                document.getElementById(
+                    "limitTutari"
+                ).innerHTML =
+                yeniLimit.toLocaleString("tr-TR")
+                +" ₺";
+
+
+                document.getElementById(
+                    "kalanLimit"
+                ).innerHTML =
+                yeniLimit.toLocaleString("tr-TR")
+                +" ₺";
+
+
+            });
+
+
+        }
+    );
+
+}
 
 </script>
 
