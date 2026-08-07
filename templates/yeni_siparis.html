@@ -135,7 +135,7 @@
                     <h6>Limit</h6>
 
                     <h3 id="limitTutari">
-                        {{ limit }}
+                        {{ "{:,.0f}".format(limit) }} ₺
                     </h3>
 
                 </div>
@@ -164,21 +164,25 @@
 
         <div class="col-md-3">
 
-            <div class="card">
+    <div class="card">
 
-                <div class="card-body text-center">
+        <div class="card-body text-center">
 
-                    <h6>Durum</h6>
+            <h6>Durum</h6>
 
-                    <h3 id="limitDurumu">
-                        Uygun
-                    </h3>
+            <h3 id="limitDurumu">
 
-                </div>
+                <span class="text-success">
+                    ✔ Uygun
+                </span>
 
-            </div>
+            </h3>
 
         </div>
+
+    </div>
+
+</div>
 
     </div>
 
@@ -623,6 +627,16 @@ siparis.forEach(function(urun){
 
     toplam += tutar;
 
+console.log(
+    "Ürün:",
+    urun.ad,
+    "Fiyat:",
+    urun.fiyat,
+    "Miktar:",
+    urun.miktar,
+    "Tutar:",
+    tutar
+);
 
 
     /*
@@ -687,10 +701,46 @@ kalanLimit.innerHTML =
 
 kalan.toLocaleString(
 "tr-TR"
+
 )
 
 +" ₺";
 
+/*
+ Limit Durumu
+*/
+
+
+if(kalan < 0){
+
+
+    limitDurumu.innerHTML =
+    `
+    <span class="text-danger">
+        ⚠️ Limit Aşıldı
+    </span>
+
+    <br>
+
+    <small class="text-danger">
+        Finans birimi ile görüşün
+    </small>
+    `;
+
+
+}
+else{
+
+
+    limitDurumu.innerHTML =
+    `
+    <span class="text-success">
+        ✔ Uygun
+    </span>
+    `;
+
+
+}
 
 
 

@@ -1,12 +1,25 @@
-from flask import Flask, render_template, request, redirect, session, abort
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    session,
+    abort,
+    flash,
+    send_file
+)
+
 print("MAIN DOSYASI ÇALIŞTI")
+
 from datetime import datetime
 import json
 import random
+
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
-from flask import send_file
+
 from io import BytesIO
+
 
 from database import (
 
@@ -45,6 +58,7 @@ from database import (
     get_finans_subeleri,
     fiyat_guncelle,
     limit_guncelle,
+    aktif_siparis_var_mi,
     get_sube_limit,
     siparise_urun_ekle,
     sipariste_urun_var_mi,
@@ -960,13 +974,22 @@ def yeni_siparis():
 
 
     # ADMIN bütün şubeleri görür
-
     if session["yetki"] == "admin":
 
         subeler = get_subeler()
 
-
     else:
+
+        # Aktif sipariş kontrolü
+        if aktif_siparis_var_mi(session["sube_id"]):
+
+            return """
+    <script>
+        alert("Bu hafta zaten aktif bir siparişiniz bulunmaktadır.");
+        window.location="/siparisler";
+    </script>
+    """
+    
 
         subeler = [
             (
@@ -975,10 +998,7 @@ def yeni_siparis():
             )
         ]
 
-
     urunler = get_tum_urunler()
-
-
 
     # ==============================
     # ŞUBE FİNANS LİMİTİ
@@ -988,18 +1008,11 @@ def yeni_siparis():
 
         secili_sube = subeler[0][0]
 
-
     else:
 
         secili_sube = session["sube_id"]
 
-
-
-    limit = get_sube_limit(
-        secili_sube
-    )
-
-
+    limit = get_sube_limit(secili_sube)
 
     return render_template(
         "yeni_siparis.html",
@@ -1007,6 +1020,7 @@ def yeni_siparis():
         urunler=urunler,
         limit=limit
     )
+
 # ==================================
 # ŞUBE LİMİT GETİRME (AJAX)
 # ==================================

@@ -1243,4 +1243,26 @@ def get_sube_limit(sube_id):
 
 
     return 0
-    
+
+def aktif_siparis_var_mi(sube_id):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM siparisler
+        WHERE sube_id=?
+        AND durum IN (
+            'Hazırlandı',
+            'Onaylandı',
+            'Sevkiyatta'
+        )
+    """, (sube_id,))
+
+    sonuc = cursor.fetchone()[0]
+
+    conn.close()
+
+    return sonuc > 0
+        
