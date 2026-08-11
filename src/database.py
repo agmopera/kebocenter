@@ -191,8 +191,101 @@ CREATE TABLE IF NOT EXISTS siparis_gecmisi(
 )
 """)
 
+       # ======================================
+    # MERKEZ STOK TABLOSU
+    # ======================================
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS merkez_stok(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            urun_id INTEGER UNIQUE,
+
+            miktar REAL DEFAULT 0,
+
+            FOREIGN KEY(urun_id)
+            REFERENCES urunler(id)
+
+        )
+    """)
+
+
+    # ======================================
+    # ŞUBE STOK TABLOSU
+    # ======================================
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sube_stok(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            sube_id INTEGER,
+
+            urun_id INTEGER,
+
+            miktar REAL DEFAULT 0,
+
+            UNIQUE(sube_id, urun_id),
+
+            FOREIGN KEY(sube_id)
+            REFERENCES subeler(id),
+
+            FOREIGN KEY(urun_id)
+            REFERENCES urunler(id)
+
+        )
+    """)
+
+
+    # ======================================
+    # STOK HAREKETLERİ
+    # ======================================
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS stok_hareketleri(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            urun_id INTEGER,
+
+            miktar REAL,
+
+            hareket_tipi TEXT,
+
+            kaynak TEXT,
+
+            hedef TEXT,
+
+            siparis_id INTEGER,
+
+            tarih TEXT,
+
+            aciklama TEXT,
+
+            FOREIGN KEY(urun_id)
+            REFERENCES urunler(id),
+
+            FOREIGN KEY(siparis_id)
+            REFERENCES siparisler(id)
+
+        )
+    """)
+
+
+    # ======================================
+    # VERİTABANI KAYDET
+    # ======================================
+
     conn.commit()
+
+
+    # ======================================
+    # VERİTABANI BAĞLANTISINI KAPAT
+    # ======================================
+
     conn.close()
+
 
 
 
@@ -1266,3 +1359,735 @@ def aktif_siparis_var_mi(sube_id):
 
     return sonuc > 0
         
+# ==================================================
+# STOKLAR
+# ==================================================
+
+def get_merkez_stok():
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            u.id,
+            u.urun_adi,
+            u.birim,
+            COALESCE(ms.miktar, 0)
+        FROM urunler u
+        LEFT JOIN merkez_stok ms
+            ON u.id = ms.urun_id
+        WHERE u.durum='Aktif'
+        ORDER BY u.urun_adi
+    """)
+
+    sonuc = cursor.fetchall()
+
+    conn.close()
+
+    return sonuc
+
+
+def merkez_stok_giris(urun_id, miktar):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO merkez_stok
+        (
+            urun_id,
+            miktar
+        )
+        VALUES (?, ?)
+
+        ON CONFLICT(urun_id)
+        DO UPDATE SET
+            miktar = miktar + excluded.miktar
+    """, (
+        urun_id,
+        miktar
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+def stok_hareketi_ekle(
+    urun_id,
+    miktar,
+    hareket_tipi,
+    kaynak,
+    hedef,
+    siparis_id=None,
+    aciklama=""
+):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    from datetime import datetime
+
+    tarih = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    cursor.execute("""
+        INSERT INTO stok_hareketleri
+        (
+            urun_id,
+            miktar,
+            hareket_tipi,
+            kaynak,
+            hedef,
+            siparis_id,
+            tarih,
+            aciklama
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        urun_id,
+        miktar,
+        hareket_tipi,
+        kaynak,
+        hedef,
+        siparis_id,
+        tarih,
+        aciklama
+    ))
+
+    conn.commit()
+    conn.close()
+
+# ==================================================
+# STOK HAREKETLERİ LİSTESİ
+# ==================================================
+# ======================================
+# STOK HAREKETLERİNİ GETİR
+# FİLTRELİ
+# ======================================
+
+def get_stok_hareketleri(
+    baslangic=None,
+    bitis=None,
+    sube_id=None,
+    urun_id=None,
+    hareket_tipi=None,
+    arama=None
+):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    sorgu = """
+        SELECT
+
+            sh.id,
+
+            sh.tarih,
+
+            u.urun_adi,
+
+            u.birim,
+
+            sh.miktar,
+
+            sh.hareket_tipi,
+
+            sh.kaynak,
+
+            sh.hedef,
+
+            sh.siparis_id,
+
+            sh.aciklama,
+
+            sb.sube_adi
+
+        FROM stok_hareketleri sh
+
+        INNER JOIN urunler u
+            ON sh.urun_id = u.id
+
+        LEFT JOIN siparisler s
+            ON sh.siparis_id = s.id
+
+        LEFT JOIN subeler sb
+            ON s.sube_id = sb.id
+
+        WHERE 1=1
+    """
+
+    parametreler = []
+
+
+    # ======================================
+    # BAŞLANGIÇ TARİHİ
+    # ======================================
+
+    if baslangic:
+
+        sorgu += """
+            AND date(sh.tarih) >= date(?)
+        """
+
+        parametreler.append(
+            baslangic
+        )
+
+
+    # ======================================
+    # BİTİŞ TARİHİ
+    # ======================================
+
+    if bitis:
+
+        sorgu += """
+            AND date(sh.tarih) <= date(?)
+        """
+
+        parametreler.append(
+            bitis
+        )
+
+
+    # ======================================
+    # ŞUBE
+    # ======================================
+
+    if sube_id:
+
+        sorgu += """
+            AND (
+                s.sube_id = ?
+                OR sh.kaynak = (
+                    SELECT sube_adi
+                    FROM subeler
+                    WHERE id=?
+                )
+            )
+        """
+
+        parametreler.append(
+            sube_id
+        )
+
+        parametreler.append(
+            sube_id
+        )
+
+
+    # ======================================
+    # ÜRÜN
+    # ======================================
+
+    if urun_id:
+
+        sorgu += """
+            AND sh.urun_id = ?
+        """
+
+        parametreler.append(
+            urun_id
+        )
+
+
+    # ======================================
+    # HAREKET TİPİ
+    # ======================================
+
+    if hareket_tipi:
+
+        sorgu += """
+            AND sh.hareket_tipi = ?
+        """
+
+        parametreler.append(
+            hareket_tipi
+        )
+
+
+    # ======================================
+    # GENEL ARAMA
+    # ======================================
+
+    if arama:
+
+        sorgu += """
+            AND (
+                u.urun_adi LIKE ?
+                OR sh.kaynak LIKE ?
+                OR sh.hedef LIKE ?
+                OR sh.aciklama LIKE ?
+            )
+        """
+
+        arama_degeri = "%" + arama + "%"
+
+        parametreler.extend([
+            arama_degeri,
+            arama_degeri,
+            arama_degeri,
+            arama_degeri
+        ])
+
+
+    # ======================================
+    # SIRALAMA
+    # ======================================
+
+    sorgu += """
+        ORDER BY sh.id DESC
+    """
+
+
+    cursor.execute(
+        sorgu,
+        parametreler
+    )
+
+    sonuc = cursor.fetchall()
+
+    conn.close()
+
+    return sonuc
+
+    # ======================================
+# ŞUBE STOKLARINI GETİR
+# ======================================
+
+def get_sube_stoklari():
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            ss.sube_id,
+            sb.sube_adi,
+            ss.urun_id,
+            u.urun_adi,
+            u.birim,
+            ss.miktar
+
+        FROM sube_stok ss
+
+        INNER JOIN subeler sb
+            ON ss.sube_id = sb.id
+
+        INNER JOIN urunler u
+            ON ss.urun_id = u.id
+
+        ORDER BY
+            sb.sube_adi,
+            u.urun_adi
+    """)
+
+    sonuc = cursor.fetchall()
+
+    conn.close()
+
+    return sonuc
+
+# ======================================
+# STOK HAREKETLERİNİ GETİR
+# ======================================
+
+
+            # ==================================================
+# ŞUBE STOK GÜNCELLE
+# ==================================================
+
+def sube_stok_guncelle(
+    sube_id,
+    urun_id,
+    miktar
+):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO sube_stok
+        (
+            sube_id,
+            urun_id,
+            miktar
+        )
+        VALUES (?, ?, ?)
+
+        ON CONFLICT(sube_id, urun_id)
+        DO UPDATE SET
+            miktar = miktar + excluded.miktar
+    """, (
+        sube_id,
+        urun_id,
+        miktar
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+# ==================================================
+# MERKEZ STOK AZALT
+# ==================================================
+
+def merkez_stok_azalt(
+    urun_id,
+    miktar
+):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO merkez_stok
+        (
+            urun_id,
+            miktar
+        )
+        VALUES (?, ?)
+
+        ON CONFLICT(urun_id)
+        DO UPDATE SET
+            miktar = miktar - ?
+    """, (
+        urun_id,
+        0,
+        miktar
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+# ==================================================
+# SİPARİŞ STOKLARINI AKTAR
+# ==================================================
+
+def siparis_stoklarini_aktar(
+    siparis_id
+):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    # ======================================
+    # SİPARİŞİN ŞUBESİNİ BUL
+    # ======================================
+
+    cursor.execute("""
+        SELECT
+            sube_id
+        FROM siparisler
+        WHERE id=?
+    """, (
+        siparis_id,
+    ))
+
+    siparis = cursor.fetchone()
+
+    if not siparis:
+
+        conn.close()
+        return
+
+    sube_id = siparis[0]
+
+
+    # ======================================
+    # SİPARİŞ ÜRÜNLERİNİ AL
+    # ======================================
+
+    cursor.execute("""
+        SELECT
+            urun_id,
+            miktar
+        FROM siparis_detay
+        WHERE siparis_id=?
+    """, (
+        siparis_id,
+    ))
+
+    detaylar = cursor.fetchall()
+
+
+    # ======================================
+    # ÜRÜNLERİ AKTAR
+    # ======================================
+
+    for detay in detaylar:
+
+        urun_id = detay[0]
+        miktar = detay[1]
+
+
+        # ==================================
+        # MERKEZ STOKTAN DÜŞ
+        # ==================================
+
+        cursor.execute("""
+            INSERT INTO merkez_stok
+            (
+                urun_id,
+                miktar
+            )
+            VALUES (?, ?)
+
+            ON CONFLICT(urun_id)
+            DO UPDATE SET
+                miktar = miktar - ?
+        """, (
+            urun_id,
+            -miktar,
+            miktar
+        ))
+
+
+        # ==================================
+        # ŞUBE STOKUNA EKLE
+        # ==================================
+
+        cursor.execute("""
+            INSERT INTO sube_stok
+            (
+                sube_id,
+                urun_id,
+                miktar
+            )
+            VALUES (?, ?, ?)
+
+            ON CONFLICT(sube_id, urun_id)
+            DO UPDATE SET
+                miktar = miktar + excluded.miktar
+        """, (
+            sube_id,
+            urun_id,
+            miktar
+        ))
+
+
+        # ==================================
+        # STOK HAREKETİ
+        # ==================================
+
+        from datetime import datetime
+
+        tarih = datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+        cursor.execute("""
+            INSERT INTO stok_hareketleri
+            (
+                urun_id,
+                miktar,
+                hareket_tipi,
+                kaynak,
+                hedef,
+                siparis_id,
+                tarih,
+                aciklama
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            urun_id,
+            miktar,
+            "Sipariş Sevki",
+            "Merkez Depo",
+            str(sube_id),
+            siparis_id,
+            tarih,
+            "Sipariş onaylandı ve stok transferi yapıldı"
+        ))
+
+
+    conn.commit()
+    conn.close()
+
+    # ==================================================
+# ŞUBE SATIŞ STOK İŞLEMLERİ
+# ==================================================
+def sube_stok_azalt(
+    sube_id,
+    urun_id,
+    miktar
+):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    # ======================================
+    # ŞUBE BİLGİSİNİ AL
+    # ======================================
+
+    cursor.execute("""
+        SELECT
+            sube_adi
+        FROM subeler
+        WHERE id=?
+    """, (
+        sube_id,
+    ))
+
+    sube = cursor.fetchone()
+
+    if not sube:
+        conn.close()
+        return False
+
+    sube_adi = sube[0]
+
+
+    # ======================================
+    # ÜRÜN BİLGİSİNİ AL
+    # ======================================
+
+    cursor.execute("""
+        SELECT
+            urun_adi,
+            birim
+        FROM urunler
+        WHERE id=?
+    """, (
+        urun_id,
+    ))
+
+    urun = cursor.fetchone()
+
+    if not urun:
+        conn.close()
+        return False
+
+    urun_adi = urun[0]
+    birim = urun[1]
+
+
+   # ======================================
+    # ŞUBE STOKTAN SATIŞI DÜŞ
+    # ======================================
+
+    cursor.execute("""
+        SELECT miktar
+        FROM sube_stok
+        WHERE sube_id=?
+        AND urun_id=?
+    """, (
+        sube_id,
+        urun_id
+    ))
+
+    mevcut = cursor.fetchone()
+
+
+    if mevcut:
+
+        cursor.execute("""
+            UPDATE sube_stok
+            SET miktar = miktar - ?
+            WHERE sube_id=?
+            AND urun_id=?
+        """, (
+            miktar,
+            sube_id,
+            urun_id
+        ))
+
+    else:
+
+        cursor.execute("""
+            INSERT INTO sube_stok
+            (
+                sube_id,
+                urun_id,
+                miktar
+            )
+            VALUES (?, ?, ?)
+        """, (
+            sube_id,
+            urun_id,
+            -miktar
+        ))
+
+
+    # ======================================
+    # STOK HAREKETİ
+    # ======================================
+
+    from datetime import datetime
+
+    tarih = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+
+    cursor.execute("""
+        INSERT INTO stok_hareketleri
+        (
+            urun_id,
+            miktar,
+            hareket_tipi,
+            kaynak,
+            hedef,
+            siparis_id,
+            tarih,
+            aciklama
+        )
+
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        urun_id,
+        -miktar,
+        "Satış",
+        sube_adi,
+        "Müşteri",
+        None,
+        tarih,
+        "Excel satış verisi aktarımı"
+    ))
+
+
+    conn.commit()
+    conn.close()
+
+    return True
+    
+
+def get_sube_urun_id(
+    sube_adi,
+    urun_adi
+):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            s.id,
+            u.id
+
+        FROM subeler s
+
+        CROSS JOIN urunler u
+
+        WHERE
+            UPPER(TRIM(s.sube_adi))
+            =
+            UPPER(TRIM(?))
+
+            AND
+
+            UPPER(TRIM(u.urun_adi))
+            =
+            UPPER(TRIM(?))
+    """, (
+        sube_adi,
+        urun_adi
+    ))
+
+    sonuc = cursor.fetchone()
+
+    conn.close()
+
+    return sonuc

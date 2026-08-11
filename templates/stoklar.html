@@ -1,1 +1,1486 @@
-<h2>Faz 2 Çalışmasında Eklenecektir</h2>
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>KEBOCENTER | Stoklar</title>
+
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+rel="stylesheet"
+>
+
+<link
+rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+>
+
+<style>
+
+body{
+    background:#f4f6f9;
+}
+
+.card{
+    border:none;
+    border-radius:14px;
+    box-shadow:0 3px 12px rgba(0,0,0,.08);
+}
+
+.baslik{
+    font-size:28px;
+    font-weight:bold;
+}
+
+.table td,
+.table th{
+    vertical-align:middle;
+}
+
+.stokNegatif{
+    color:#dc3545;
+    font-weight:bold;
+}
+
+.stokPozitif{
+    color:#198754;
+    font-weight:bold;
+}
+
+.stokSifir{
+    color:#6c757d;
+    font-weight:bold;
+}
+
+.badge-birim{
+    background:#f1f3f5;
+    color:#343a40;
+    font-weight:500;
+}
+
+.ozet-kart{
+    min-height:120px;
+}
+
+.section-title{
+    font-size:20px;
+    font-weight:600;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container mt-4 mb-5">
+
+
+<!-- ====================================== -->
+<!-- SAYFA BAŞLIĞI -->
+<!-- ====================================== -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div class="baslik">
+
+        📦 Stok Yönetimi
+
+    </div>
+
+
+    <a
+        href="/dashboard"
+        class="btn btn-secondary"
+    >
+
+        <i class="bi bi-arrow-left"></i>
+
+        Dashboard'a Dön
+
+    </a>
+
+</div>
+
+
+
+<!-- ====================================== -->
+<!-- ÖZET KARTLARI -->
+<!-- ====================================== -->
+
+<div class="row g-3 mb-4">
+
+
+    <!-- TOPLAM ÜRÜN -->
+
+    <div class="col-md-3">
+
+        <div class="card ozet-kart h-100">
+
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+
+                <h6 class="text-muted mb-2">
+
+                    Toplam Ürün
+
+                </h6>
+
+                <h2 class="mb-0">
+
+                    {{ merkez_stok|length }}
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- NEGATİF STOK -->
+
+    <div class="col-md-3">
+
+        <div class="card ozet-kart h-100">
+
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+
+                <h6 class="text-muted mb-2">
+
+                    Negatif Stok
+
+                </h6>
+
+                <h2
+                    id="negatifSayisi"
+                    class="mb-0"
+                >
+
+                    0
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ŞUBE STOK KAYDI -->
+
+    <div class="col-md-3">
+
+        <div class="card ozet-kart h-100">
+
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+
+                <h6 class="text-muted mb-2">
+
+                    Şube Stok Kaydı
+
+                </h6>
+
+                <h2 class="mb-0">
+
+                    {{ sube_stoklari|length }}
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- MERKEZ DEPO -->
+
+    <div class="col-md-3">
+
+        <div class="card ozet-kart h-100">
+
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+
+                <h6 class="text-muted mb-2">
+
+                    Merkez Depo
+
+                </h6>
+
+                <h2 class="mb-0 text-success">
+
+                    Aktif
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- ====================================== -->
+<!-- ŞUBE SATIŞ VERİSİ AKTARIMI -->
+<!-- ====================================== -->
+
+<div class="card mb-4">
+
+    <div class="card-header bg-primary text-white">
+
+        <h5 class="mb-0">
+
+            <i class="bi bi-file-earmark-excel"></i>
+
+            Şube Satış Verisi Aktar
+
+        </h5>
+
+    </div>
+
+
+    <div class="card-body">
+
+
+        <p class="text-muted mb-3">
+
+            Excel dosyasındaki satış miktarları,
+            ilgili şubenin mevcut stokundan düşülecektir.
+
+        </p>
+
+
+        <form
+            method="POST"
+            action="/sube-satis-aktar"
+            enctype="multipart/form-data"
+        >
+
+
+            <div class="row align-items-end">
+
+
+                <div class="col-md-8">
+
+                    <label class="form-label fw-bold">
+
+                        Excel Dosyası
+
+                    </label>
+
+
+                    <input
+                        type="file"
+                        name="dosya"
+                        class="form-control"
+                        accept=".xlsx,.xls"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary w-100"
+                    >
+
+                        <i class="bi bi-upload"></i>
+
+                        Satış Verilerini Aktar
+
+                    </button>
+
+                </div>
+
+
+            </div>
+
+
+        </form>
+
+
+        <div class="mt-3">
+
+            <small class="text-muted">
+
+                Excel sütunları:
+
+                <strong>Şube</strong> ,
+
+                <strong>Ürün Adı</strong> ,
+
+                <strong>Satış Miktarı</strong>
+
+            </small>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<!-- ====================================== -->
+<!-- MERKEZ STOK -->
+<!-- ====================================== -->
+
+<div class="card mb-4">
+
+
+    <div class="card-header bg-dark text-white">
+
+        <h5 class="mb-0">
+
+            <i class="bi bi-box-seam"></i>
+
+            Merkez Stok Listesi
+
+        </h5>
+
+    </div>
+
+
+    <div class="card-body">
+
+
+        <div class="table-responsive">
+
+
+            <table class="table table-hover table-bordered mb-0">
+
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th width="7%">
+                            #
+                        </th>
+
+                        <th>
+                            Ürün
+                        </th>
+
+                        <th width="12%">
+                            Birim
+                        </th>
+
+                        <th width="15%">
+                            Mevcut Stok
+                        </th>
+
+                        <th width="18%">
+                            Stok Girişi
+                        </th>
+
+                        <th width="15%">
+                            İşlem
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                    {% for urun in merkez_stok %}
+
+
+                    <tr>
+
+
+                        <!-- SIRA -->
+
+                        <td>
+
+                            {{ loop.index }}
+
+                        </td>
+
+
+
+                        <!-- ÜRÜN -->
+
+                        <td>
+
+                            <strong>
+
+                                {{ urun[1] }}
+
+                            </strong>
+
+                        </td>
+
+
+
+                        <!-- BİRİM -->
+
+                        <td>
+
+                            <span class="badge badge-birim">
+
+                                {{ urun[2] }}
+
+                            </span>
+
+                        </td>
+
+
+
+                        <!-- MEVCUT STOK -->
+
+                        <td>
+
+
+                            {% if urun[3] < 0 %}
+
+
+                                <span class="stokNegatif">
+
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+
+                                    {{ urun[3] }}
+
+                                </span>
+
+
+                            {% elif urun[3] == 0 %}
+
+
+                                <span class="stokSifir">
+
+                                    {{ urun[3] }}
+
+                                </span>
+
+
+                            {% else %}
+
+
+                                <span class="stokPozitif">
+
+                                    {{ urun[3] }}
+
+                                </span>
+
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+                        <!-- STOK GİRİŞİ -->
+
+                        <td>
+
+
+                            <form
+                                method="POST"
+                                action="/stok-giris"
+                                class="d-flex gap-2"
+                            >
+
+
+                                <input
+                                    type="hidden"
+                                    name="urun_id"
+                                    value="{{ urun[0] }}"
+                                >
+
+
+                                <input
+                                    type="number"
+                                    name="miktar"
+                                    class="form-control"
+                                    min="1"
+                                    step="1"
+                                    placeholder="Miktar"
+                                    required
+                                >
+
+
+                        </td>
+
+
+
+                        <!-- İŞLEM -->
+
+                        <td>
+
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-success w-100"
+                                >
+
+                                    <i class="bi bi-plus-circle"></i>
+
+                                    Giriş Yap
+
+                                </button>
+
+
+                            </form>
+
+
+                        </td>
+
+
+                    </tr>
+
+
+                    {% endfor %}
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- ====================================== -->
+<!-- ŞUBE STOKLARI -->
+<!-- ====================================== -->
+
+<div class="card mb-4">
+
+
+    <div class="card-header bg-primary text-white">
+
+
+        <div class="d-flex justify-content-between align-items-center">
+
+
+            <h5 class="mb-0">
+
+                <i class="bi bi-shop"></i>
+
+                Şube Stokları
+
+            </h5>
+
+
+            <span class="badge bg-light text-primary">
+
+                {{ sube_stoklari|length }} Kayıt
+
+            </span>
+
+
+        </div>
+
+
+    </div>
+
+
+    <div class="card-body">
+
+
+        {% if sube_stoklari %}
+
+
+        <div class="table-responsive">
+
+
+            <table class="table table-hover table-bordered mb-0">
+
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th width="7%">
+                            #
+                        </th>
+
+                        <th>
+                            Şube
+                        </th>
+
+                        <th>
+                            Ürün
+                        </th>
+
+                        <th width="12%">
+                            Birim
+                        </th>
+
+                        <th width="18%">
+                            Mevcut Stok
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                    {% for stok in sube_stoklari %}
+
+
+                    <tr>
+
+
+                        <!-- SIRA -->
+
+                        <td>
+
+                            {{ loop.index }}
+
+                        </td>
+
+
+
+                        <!-- ŞUBE -->
+
+                        <td>
+
+                            <strong>
+
+                                {{ stok[1] }}
+
+                            </strong>
+
+                        </td>
+
+
+
+                        <!-- ÜRÜN -->
+
+                        <td>
+
+                            {{ stok[3] }}
+
+                        </td>
+
+
+
+                        <!-- BİRİM -->
+
+                        <td>
+
+                            <span class="badge badge-birim">
+
+                                {{ stok[4] }}
+
+                            </span>
+
+                        </td>
+
+
+
+                        <!-- STOK -->
+
+                        <td>
+
+
+                            {% if stok[5] < 0 %}
+
+
+                                <span class="stokNegatif">
+
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+
+                                    {{ stok[5] }}
+
+                                </span>
+
+
+                            {% elif stok[5] == 0 %}
+
+
+                                <span class="stokSifir">
+
+                                    {{ stok[5] }}
+
+                                </span>
+
+
+                            {% else %}
+
+
+                                <span class="stokPozitif">
+
+                                    {{ stok[5] }}
+
+                                </span>
+
+
+                            {% endif %}
+
+
+                        </td>
+
+
+                    </tr>
+
+
+                    {% endfor %}
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+        {% else %}
+
+
+        <div class="text-center py-5">
+
+
+            <i
+                class="bi bi-shop fs-1 text-muted"
+            ></i>
+
+
+            <h5 class="mt-3">
+
+                Henüz şube stoku bulunmuyor.
+
+            </h5>
+
+
+            <p class="text-muted mb-0">
+
+                Şubelerin siparişleri admin tarafından
+                onaylandıkça stokları burada oluşacaktır.
+
+            </p>
+
+
+        </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- ====================================== -->
+<!-- STOK HAREKETLERİ -->
+<!-- ====================================== -->
+
+<div class="card mb-4">
+
+
+    <div class="card-header bg-secondary text-white">
+
+
+        <div class="d-flex justify-content-between align-items-center">
+
+
+            <h5 class="mb-0">
+
+                <i class="bi bi-clock-history"></i>
+
+                Stok Hareketleri
+
+            </h5>
+
+
+            <span class="badge bg-light text-dark">
+
+                {{ stok_hareketleri|length }} Hareket
+
+            </span>
+
+
+        </div>
+
+
+    </div>
+
+
+    <div class="card-body">
+
+        <!-- ====================================== -->
+<!-- STOK HAREKETLERİ FİLTRE -->
+<!-- ====================================== -->
+
+<div class="card border mb-4">
+
+    <div class="card-body">
+
+        <form
+            method="GET"
+            action="/stoklar"
+        >
+
+            <div class="row g-3">
+
+
+                <!-- BAŞLANGIÇ TARİHİ -->
+
+                <div class="col-md-2">
+
+                    <label class="form-label fw-bold">
+
+                        Başlangıç
+
+                    </label>
+
+                    <input
+                        type="date"
+                        name="baslangic"
+                        class="form-control"
+                        value="{{ baslangic }}"
+                    >
+
+                </div>
+
+
+                <!-- BİTİŞ TARİHİ -->
+
+                <div class="col-md-2">
+
+                    <label class="form-label fw-bold">
+
+                        Bitiş
+
+                    </label>
+
+                    <input
+                        type="date"
+                        name="bitis"
+                        class="form-control"
+                        value="{{ bitis }}"
+                    >
+
+                </div>
+
+
+                <!-- ŞUBE -->
+
+                <div class="col-md-2">
+
+                    <label class="form-label fw-bold">
+
+                        Şube
+
+                    </label>
+
+                    <select
+                        name="sube_id"
+                        class="form-select"
+                    >
+
+                        <option value="">
+
+                            Tüm Şubeler
+
+                        </option>
+
+
+                        {% for sube in filtre_subeler %}
+
+                            <option
+                                value="{{ sube[0] }}"
+                                {% if secili_sube == sube[0] %}
+                                    selected
+                                {% endif %}
+                            >
+
+                                {{ sube[1] }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- ÜRÜN -->
+
+                <div class="col-md-3">
+
+                    <label class="form-label fw-bold">
+
+                        Ürün
+
+                    </label>
+
+                    <select
+                        name="urun_id"
+                        class="form-select"
+                    >
+
+                        <option value="">
+
+                            Tüm Ürünler
+
+                        </option>
+
+
+                        {% for urun in filtre_urunler %}
+
+                            <option
+                                value="{{ urun[0] }}"
+                                {% if secili_urun == urun[0] %}
+                                    selected
+                                {% endif %}
+                            >
+
+                                {{ urun[1] }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- HAREKET TİPİ -->
+
+                <div class="col-md-3">
+
+                    <label class="form-label fw-bold">
+
+                        Hareket Türü
+
+                    </label>
+
+                    <select
+                        name="hareket_tipi"
+                        class="form-select"
+                    >
+
+                        <option value="">
+
+                            Tüm Hareketler
+
+                        </option>
+
+                        <option
+                            value="Giriş"
+                            {% if secili_hareket == "Giriş" %}
+                                selected
+                            {% endif %}
+                        >
+
+                            Giriş
+
+                        </option>
+
+                        <option
+                            value="Sipariş Sevki"
+                            {% if secili_hareket == "Sipariş Sevki" %}
+                                selected
+                            {% endif %}
+                        >
+
+                            Sipariş Sevki
+
+                        </option>
+
+                        <option
+                            value="Satış"
+                            {% if secili_hareket == "Satış" %}
+                                selected
+                            {% endif %}
+                        >
+
+                            Satış
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- ARAMA -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label fw-bold">
+
+                        Genel Arama
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="arama"
+                        class="form-control"
+                        placeholder="Ürün, kaynak, hedef veya açıklama..."
+                        value="{{ arama }}"
+                    >
+
+                </div>
+
+
+                <!-- BUTONLAR -->
+
+                <div class="col-md-3 d-flex align-items-end">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary w-100"
+                    >
+
+                        <i class="bi bi-funnel"></i>
+
+                        Filtrele
+
+                    </button>
+
+                </div>
+
+
+                <div class="col-md-3 d-flex align-items-end">
+
+                    <a
+                        href="/stoklar"
+                        class="btn btn-outline-secondary w-100"
+                    >
+
+                        <i class="bi bi-x-circle"></i>
+
+                        Filtreleri Temizle
+
+                    </a>
+
+                </div>
+
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+        {% if stok_hareketleri %}
+
+
+        <div class="table-responsive">
+
+
+            <table class="table table-hover table-bordered mb-0">
+
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th width="5%">
+                            #
+                        </th>
+
+                        <th width="15%">
+                            Tarih
+                        </th>
+
+                        <th>
+                            Ürün
+                        </th>
+
+                        <th width="10%">
+                            Birim
+                        </th>
+
+                        <th width="10%">
+                            Miktar
+                        </th>
+
+                        <th width="15%">
+                            Hareket
+                        </th>
+
+                        <th width="15%">
+                            Kaynak
+                        </th>
+
+                        <th width="15%">
+                            Hedef
+                        </th>
+
+                        <th width="10%">
+                            Sipariş
+                        </th>
+
+                        <th width="15%">
+                            Açıklama
+                        </th>
+
+                        
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                    {% for hareket in stok_hareketleri %}
+
+
+                    <tr>
+
+
+                        <!-- SIRA -->
+
+                        <td>
+
+                            {{ loop.index }}
+
+                        </td>
+
+
+
+                        <!-- TARİH -->
+
+                        <td>
+
+                            <small>
+
+                                {{ hareket[1] }}
+
+                            </small>
+
+                        </td>
+
+
+
+                        <!-- ÜRÜN -->
+
+                        <td>
+
+                            <strong>
+
+                                {{ hareket[2] }}
+
+                            </strong>
+
+                        </td>
+
+
+
+                        <!-- BİRİM -->
+
+                        <td>
+
+                            <span class="badge badge-birim">
+
+                                {{ hareket[3] }}
+
+                            </span>
+
+                        </td>
+
+
+
+                        <!-- MİKTAR -->
+
+                        <td>
+
+
+                            {% if hareket[4] < 0 %}
+
+
+                                <span class="stokNegatif">
+
+                                    {{ hareket[4] }}
+
+                                </span>
+
+
+                            {% else %}
+
+
+                                <span class="stokPozitif">
+
+                                    +{{ hareket[4] }}
+
+                                </span>
+
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+                        <!-- HAREKET -->
+
+                        <td>
+
+
+                            {% if hareket[5] == "Giriş" %}
+
+
+                                <span class="badge bg-success">
+
+                                    <i class="bi bi-box-arrow-in-down"></i>
+
+                                    Giriş
+
+                                </span>
+
+
+                            {% elif hareket[5] == "Sipariş Sevki" %}
+
+
+                                <span class="badge bg-primary">
+
+                                    <i class="bi bi-truck"></i>
+
+                                    Sipariş Sevki
+
+                                </span>
+
+
+                            {% elif hareket[5] == "Satış" %}
+
+
+                                <span class="badge bg-warning text-dark">
+
+                                    <i class="bi bi-cart-check"></i>
+
+                                    Satış
+
+                                </span>
+
+
+                            {% else %}
+
+
+                                <span class="badge bg-secondary">
+
+                                    {{ hareket[5] }}
+
+                                </span>
+
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+                        <!-- KAYNAK -->
+
+                        <td>
+
+                            {{ hareket[6] or "-" }}
+
+                        </td>
+
+
+
+                        <!-- HEDEF -->
+
+                        <td>
+
+                            {{ hareket[7] or "-" }}
+
+                        </td>
+
+
+
+                        <!-- SİPARİŞ -->
+
+                        <td>
+
+
+                            {% if hareket[8] %}
+
+
+                                <a
+                                    href="/siparis-detay/{{ hareket[8] }}"
+                                    class="btn btn-sm btn-outline-primary"
+                                >
+
+                                    #{{ hareket[8] }}
+
+                                </a>
+
+
+                            {% else %}
+
+
+                                -
+
+                            {% endif %}
+
+
+                        </td>
+<!-- AÇIKLAMA -->
+
+<td>
+
+    <small class="text-muted">
+
+        {{ hareket[9] or "-" }}
+
+    </small>
+
+</td>
+
+
+                    </tr>
+
+
+                    {% endfor %}
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+        {% else %}
+
+
+        <div class="text-center py-5">
+
+
+            <i
+                class="bi bi-clock-history fs-1 text-muted"
+            ></i>
+
+
+            <h5 class="mt-3">
+
+                Henüz stok hareketi bulunmuyor.
+
+            </h5>
+
+
+            <p class="text-muted mb-0">
+
+                Merkez stok girişleri ve sipariş transferleri
+                burada kayıt altına alınacaktır.
+
+            </p>
+
+
+        </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- ====================================== -->
+<!-- BİLGİ -->
+<!-- ====================================== -->
+
+<div class="alert alert-info">
+
+
+    <i class="bi bi-info-circle"></i>
+
+
+    <strong>Stok aktarımı:</strong>
+
+
+    Şube siparişi admin tarafından onaylandığında,
+    ilgili ürün miktarı merkez stoktan düşülür ve
+    şube stokuna otomatik olarak eklenir.
+
+
+</div>
+
+
+
+</div>
+
+
+
+<!-- ====================================== -->
+<!-- NEGATİF STOK SAYACI -->
+<!-- ====================================== -->
+
+<script>
+
+let negatif = 0;
+
+document
+.querySelectorAll(".stokNegatif")
+.forEach(function(){
+
+    negatif++;
+
+});
+
+document
+.getElementById("negatifSayisi")
+.innerHTML = negatif;
+
+</script>
+
+
+
+<script
+src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+
+</body>
+
+</html>

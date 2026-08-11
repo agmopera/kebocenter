@@ -16,6 +16,7 @@ import json
 import random
 
 from openpyxl import Workbook
+import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 
 from io import BytesIO
@@ -53,6 +54,9 @@ from database import (
     delete_siparis_detay,
     siparis_durum_guncelle,
     siparis_gecmisi_ekle,
+    get_merkez_stok,
+    merkez_stok_giris,
+    stok_hareketi_ekle,
     get_siparis_gecmisi,
     get_finans_urunleri,
     get_finans_subeleri,
@@ -61,6 +65,11 @@ from database import (
     aktif_siparis_var_mi,
     get_sube_limit,
     siparise_urun_ekle,
+    siparis_stoklarini_aktar,
+    sube_stok_azalt,
+    get_sube_urun_id,
+    get_sube_stoklari,
+    get_stok_hareketleri,
     sipariste_urun_var_mi,
     toplam_koli,
 
@@ -348,6 +357,9 @@ def sube_sil(id):
 
     return redirect("/subeler")
 
+    
+
+
 
 
 # ==========================
@@ -466,16 +478,48 @@ def ai():
     return render_template("ai.html")
 
 
-@app.route("/stoklar")
-def stoklar():
+
+# ======================================
+# MERKEZ STOK GİRİŞİ
+# ======================================
+
+@app.route(
+    "/stok-giris",
+    methods=["POST"]
+)
+def stok_giris():
 
     sonuc = admin_kontrol()
 
     if sonuc:
         return sonuc
 
-    return render_template("stoklar.html")
+    urun_id = request.form["urun_id"]
 
+    miktar = float(
+        request.form["miktar"]
+    )
+
+    if miktar <= 0:
+
+        return redirect("/stoklar")
+
+    merkez_stok_giris(
+        urun_id,
+        miktar
+    )
+
+    stok_hareketi_ekle(
+        urun_id,
+        miktar,
+        "Giriş",
+        "Tedarikçi",
+        "Merkez Depo",
+        None,
+        "Merkez stok girişi"
+    )
+
+    return redirect("/stoklar")
 
 
 
@@ -518,47 +562,34 @@ def yeni_urun():
 
 
 
-
-
-
 @app.route(
     "/urun-duzenle/<int:id>",
     methods=["GET","POST"]
 )
 def urun_duzenle(id):
 
-
     sonuc = admin_kontrol()
 
     if sonuc:
         return sonuc
 
-
-
     if request.method == "POST":
 
-
         update_urun(
-
             id,
-
             request.form["urun_kodu"],
             request.form["urun_adi"],
             request.form["kategori"],
             request.form["birim"],
+            request.form["palet_kapasitesi"],
+            request.form["urun_tipi"],
+            request.form.get("koli_agirligi", 0),
             request.form["durum"]
-
         )
-
 
         return redirect("/urunler")
 
-
-
-
     urun = get_urun(id)
-
-
 
     return render_template(
         "urun_duzenle.html",
@@ -566,10 +597,7 @@ def urun_duzenle(id):
     )
 
 
-
-
-
-
+    
 
 @app.route("/urun-sil/<int:id>")
 def urun_sil(id):
@@ -719,12 +747,19 @@ def siparis_durum(id):
 
     return redirect("/siparisler")
 
-# ==========================
+    
+
+
+# ======================================
 # ADMIN SİPARİŞ ONAY
-# ==========================
+# ======================================
 
 @app.route("/siparis-onayla/<int:id>")
 def siparis_onayla(id):
+
+    # ==================================
+    # ADMIN KONTROLÜ
+    # ==================================
 
     sonuc = admin_kontrol()
 
@@ -732,9 +767,58 @@ def siparis_onayla(id):
         return sonuc
 
 
+    # ==================================
+    # SİPARİŞİ BUL
+    # ==================================
+
+    siparis = get_siparis(id)
+
+    if not siparis:
+        abort(404)
+
+
+    # ==================================
+    # SADECE HAZIRLANDI DURUMUNDA
+    # ONAYLANABİLİR
+    # ==================================
+
+    if siparis[4] != "Hazırlandı":
+
+        return redirect("/siparisler")
+
+
+    # ==================================
+    # STOK TRANSFERİ
+    # ==================================
+
+    siparis_stoklarini_aktar(id)
+
+
+    # ==================================
+    # SİPARİŞ DURUMUNU ONAYLA
+    # ==================================
+
     siparis_durum_guncelle(
         id,
         "Onaylandı"
+    )
+
+
+    # ==================================
+    # SİPARİŞ GEÇMİŞİ
+    # ==================================
+
+    siparis_gecmisi_ekle(
+        siparis_id=id,
+        tarih=datetime.now().strftime(
+            "%d.%m.%Y %H:%M"
+        ),
+        kullanici=session.get(
+            "sube_adi",
+            "Admin"
+        ),
+        eski_durum="Hazırlandı",
+        yeni_durum="Onaylandı"
     )
 
 
@@ -1029,62 +1113,456 @@ def yeni_siparis():
 def get_sube_limit_ajax(sube_id):
 
     if "giris" not in session:
-        return {"limit":0}
-
+        return {"limit": 0}
 
     limit = get_sube_limit(
         sube_id
     )
 
-
     return {
         "limit": limit
     }
 
+
+ # ======================================
+# STOKLAR
+# ======================================
+@app.route("/stoklar")
+def stoklar():
+
+    sonuc = admin_kontrol()
+
+    if sonuc:
+        return sonuc
+
+
+    # ==================================
+    # FİLTRELER
+    # ==================================
+
+    baslangic = request.args.get(
+        "baslangic",
+        ""
+    )
+
+    bitis = request.args.get(
+        "bitis",
+        ""
+    )
+
+    sube_id = request.args.get(
+        "sube_id",
+        ""
+    )
+
+    urun_id = request.args.get(
+        "urun_id",
+        ""
+    )
+
+    hareket_tipi = request.args.get(
+        "hareket_tipi",
+        ""
+    )
+
+    arama = request.args.get(
+        "arama",
+        ""
+    )
+
+
+    # ==================================
+    # BOŞ DEĞERLERİ NONE YAP
+    # ==================================
+
+    sube_id = int(sube_id) if sube_id else None
+
+    urun_id = int(urun_id) if urun_id else None
+
+
+    # ==================================
+    # MERKEZ STOKLARI
+    # ==================================
+
+    merkez_stok = get_merkez_stok()
+
+
+    # ==================================
+    # ŞUBE STOKLARI
+    # ==================================
+
+    sube_stoklari = get_sube_stoklari()
+
+
+    # ==================================
+    # STOK HAREKETLERİ
+    # ==================================
+
+    stok_hareketleri = get_stok_hareketleri(
+    baslangic or None,
+    bitis or None,
+    sube_id,
+    urun_id,
+    hareket_tipi or None,
+    arama.strip() or None
+)
+
+
+
+    # ==================================
+    # FİLTRE SEÇENEKLERİ
+    # ==================================
+
+    filtre_subeler = get_tum_subeler()
+
+    filtre_urunler = get_tum_urunler()
+
+
+    return render_template(
+        "stoklar.html",
+
+        merkez_stok=merkez_stok,
+
+        sube_stoklari=sube_stoklari,
+
+        stok_hareketleri=stok_hareketleri,
+
+        filtre_subeler=filtre_subeler,
+
+        filtre_urunler=filtre_urunler,
+
+        baslangic=baslangic,
+
+        bitis=bitis,
+
+        secili_sube=sube_id,
+
+        secili_urun=urun_id,
+
+        secili_hareket=hareket_tipi,
+
+        arama=arama
+    )
+    
+    
+
+# ======================================
+# ŞUBE SATIŞ EXCEL AKTARIMI
+# ======================================
+
+@app.route(
+    "/sube-satis-aktar",
+    methods=["POST"]
+)
+def sube_satis_aktar():
+
+    sonuc = admin_kontrol()
+
+    if sonuc:
+        return sonuc
+
+    dosya = request.files.get("dosya")
+
+    if not dosya or dosya.filename == "":
+
+        return """
+        <script>
+            alert("Lütfen Excel dosyası seçin.");
+            window.location="/stoklar";
+        </script>
+        """
+
+    try:
+
+        wb = openpyxl.load_workbook(
+            dosya,
+            data_only=True
+        )
+
+        ws = wb.active
+
+        # ======================================
+        # EXCEL BAŞLIKLARI
+        # ======================================
+
+        basliklar = []
+
+        for hucre in ws[1]:
+
+            if hucre.value is not None:
+
+                basliklar.append(
+                    str(hucre.value).strip()
+                )
+
+            else:
+
+                basliklar.append("")
+
+
+        # ======================================
+        # GEREKLİ SÜTUN KONTROLÜ
+        # ======================================
+
+        gerekli_basliklar = [
+            "Şube",
+            "Ürün Adı",
+            "Satış Miktarı"
+        ]
+
+        for baslik in gerekli_basliklar:
+
+            if baslik not in basliklar:
+
+                return f"""
+                <script>
+
+                    alert(
+                        "Excel formatı hatalı.\\n\\n" +
+                        "Eksik sütun: {baslik}\\n\\n" +
+                        "Gerekli sütunlar:\\n" +
+                        "Şube\\n" +
+                        "Ürün Adı\\n" +
+                        "Satış Miktarı"
+                    );
+
+                    window.location="/stoklar";
+
+                </script>
+                """
+
+
+        # ======================================
+        # SÜTUNLARIN YERLERİNİ BUL
+        # ======================================
+
+        sube_index = basliklar.index("Şube")
+
+        urun_index = basliklar.index("Ürün Adı")
+
+        miktar_index = basliklar.index("Satış Miktarı")
+
+
+        # ======================================
+        # SONUÇ SAYACI
+        # ======================================
+
+        basarili = 0
+
+        hatali = 0
+
+
+        # ======================================
+        # EXCEL SATIRLARINI OKU
+        # ======================================
+
+        for satir in ws.iter_rows(
+            min_row=2,
+            values_only=True
+        ):
+
+            # Satır uzunluğu kontrolü
+
+            if len(satir) <= max(
+                sube_index,
+                urun_index,
+                miktar_index
+            ):
+
+                hatali += 1
+
+                continue
+
+
+            sube_adi = satir[sube_index]
+
+            urun_adi = satir[urun_index]
+
+            miktar = satir[miktar_index]
+
+
+            # ==================================
+            # BOŞ SATIRLARI GEÇ
+            # ==================================
+
+            if (
+                sube_adi is None
+                or urun_adi is None
+                or miktar is None
+            ):
+
+                continue
+
+
+            # ==================================
+            # MİKTAR KONTROLÜ
+            # ==================================
+
+            try:
+
+                miktar = float(miktar)
+
+            except:
+
+                hatali += 1
+
+                continue
+
+
+            if miktar <= 0:
+
+                hatali += 1
+
+                continue
+
+
+            # ==================================
+            # ŞUBE + ÜRÜN EŞLEŞTİR
+            # ==================================
+
+            eslesme = get_sube_urun_id(
+                str(sube_adi).strip(),
+                str(urun_adi).strip()
+            )
+
+
+            if not eslesme:
+
+                hatali += 1
+
+                continue
+
+
+            sube_id = eslesme[0]
+
+            urun_id = eslesme[1]
+
+
+            # ==================================
+            # ŞUBE STOKTAN SATIŞI DÜŞ
+            # ==================================
+
+            sube_stok_azalt(
+                sube_id,
+                urun_id,
+                miktar
+            )
+
+
+            basarili += 1
+
+
+        # ======================================
+        # AKTARIM SONUCU
+        # ======================================
+
+        return f"""
+        <script>
+
+            alert(
+                "Satış aktarımı tamamlandı.\\n\\n" +
+                "Başarılı kayıt: {basarili}\\n" +
+                "Hatalı kayıt: {hatali}"
+            );
+
+            window.location="/stoklar";
+
+        </script>
+        """
+
+
+    except Exception as e:
+
+        return f"""
+        <script>
+
+            alert(
+                "Excel aktarılırken hata oluştu:\\n\\n{str(e)}"
+            );
+
+            window.location="/stoklar";
+
+        </script>
+        """
+
+
 # ==========================
-# UYGULAMA BAŞLAT
+# EXCEL RAPOR
 # ==========================
 
 @app.route("/excel-rapor")
 def excel_rapor():
 
     sonuc = admin_kontrol()
+
     if sonuc:
         return sonuc
 
+
     wb = Workbook()
+
     ws = wb.active
+
     ws.title = "Şube Siparişleri"
 
+
     urunler = get_tum_urunler()
+
     subeler = get_tum_subeler()
 
-    # Başlık
+
+    # ==================================
+    # BAŞLIK
+    # ==================================
+
     ws["A1"] = "Ürün"
+
 
     sutun = 2
 
+
     for sube in subeler:
 
-        hucre = ws.cell(row=1, column=sutun)
+        hucre = ws.cell(
+            row=1,
+            column=sutun
+        )
 
         hucre.value = sube[1]
-        hucre.font = Font(bold=True)
+
+        hucre.font = Font(
+            bold=True
+        )
+
         hucre.fill = PatternFill(
             fill_type="solid",
             fgColor="D9EAD3"
         )
-        hucre.alignment = Alignment(horizontal="center")
+
+        hucre.alignment = Alignment(
+            horizontal="center"
+        )
 
         sutun += 1
 
+
+    # ==================================
+    # ÜRÜNLER
+    # ==================================
+
     satir = 2
+
 
     for urun in urunler:
 
-        ws.cell(row=satir, column=1).value = urun[1]
+        ws.cell(
+            row=satir,
+            column=1
+        ).value = urun[1]
+
 
         sutun = 2
+
 
         for sube in subeler:
 
@@ -1093,14 +1571,22 @@ def excel_rapor():
                 urun[0]
             )
 
+
             ws.cell(
                 row=satir,
                 column=sutun
             ).value = miktar
 
+
             sutun += 1
 
+
         satir += 1
+
+
+    # ==================================
+    # EXCEL DOSYASI OLUŞTUR
+    # ==================================
 
     dosya = BytesIO()
 
@@ -1109,34 +1595,62 @@ def excel_rapor():
     dosya.seek(0)
 
 
-
     return send_file(
         dosya,
         as_attachment=True,
         download_name="Siparis_Raporu.xlsx",
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        mimetype=(
+            "application/"
+            "vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
     )
 
 
+# ==========================
+# UYGULAMA BAŞLAT
+# ==========================
+
 import os
 
-print("Login fonksiyonu =", login)
-print("Endpoint =", app.view_functions["login"])
+
+print(
+    "Login fonksiyonu =",
+    login
+)
+
+
+print(
+    "Endpoint =",
+    app.view_functions["login"]
+)
+
 
 print("\n===== ROUTES =====")
 
+
 for rule in app.url_map.iter_rules():
-    print(rule, rule.methods)
+
+    print(
+        rule,
+        rule.methods
+    )
+
 
 print("==================\n")
 
-# Veritabanını oluştur / güncelle
+
+# ======================================
+# VERİTABANINI OLUŞTUR / GÜNCELLE
+# ======================================
+
 create_tables()
 
+
 if __name__ == "__main__":
+
     app.run(
         host="0.0.0.0",
         port=5000,
         debug=True
     )
-
