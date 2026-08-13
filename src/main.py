@@ -1,17 +1,4 @@
-from flask import (
-    Flask,
-    render_template,
-    request,
-    redirect,
-    session,
-    abort,
-    flash,
-    send_file
-)
-
-print("MAIN DOSYASI ÇALIŞTI")
-
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import random
 
@@ -21,10 +8,25 @@ from openpyxl.styles import Font, PatternFill, Alignment
 
 from io import BytesIO
 
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    abort,
+    flash,
+    send_file,
+    jsonify
+)
 
 from database import (
-
     create_tables,
+
+    # ======================================
+    # ŞUBELER
+    # ======================================
 
     add_sube,
     get_subeler,
@@ -32,11 +34,19 @@ from database import (
     update_sube,
     delete_sube,
 
+    # ======================================
+    # ÜRÜNLER
+    # ======================================
+
     add_urun,
     get_urunler,
     get_urun,
     update_urun,
     delete_urun,
+
+    # ======================================
+    # SİPARİŞLER
+    # ======================================
 
     add_siparis,
     add_siparis_detay,
@@ -45,6 +55,9 @@ from database import (
     get_onay_bekleyen_siparisler,
     get_siparis,
     get_siparis_detaylari,
+    get_siparis_sube_id,
+    get_siparis_detaylari_sevkiyat,
+
     get_tum_urunler,
     get_tum_subeler,
     get_siparis_miktari,
@@ -54,33 +67,57 @@ from database import (
     delete_siparis_detay,
     siparis_durum_guncelle,
     siparis_gecmisi_ekle,
-    get_merkez_stok,
-    merkez_stok_giris,
-    stok_hareketi_ekle,
     get_siparis_gecmisi,
+
+    # ======================================
+    # FİNANS
+    # ======================================
+
     get_finans_urunleri,
     get_finans_subeleri,
     fiyat_guncelle,
     limit_guncelle,
     aktif_siparis_var_mi,
     get_sube_limit,
+    get_sube_sevkiyat_bilgileri,
+
+    # ======================================
+    # SİPARİŞ ÜRÜN İŞLEMLERİ
+    # ======================================
+
     siparise_urun_ekle,
     siparis_stoklarini_aktar,
     sube_stok_azalt,
     get_sube_urun_id,
     get_sube_stoklari,
     get_stok_hareketleri,
+    get_merkez_stok,
     sipariste_urun_var_mi,
     toplam_koli,
+    merkez_stok_giris,
+    stok_hareketi_ekle,
+
+    # ======================================
+    # SEVKİYAT
+    # ======================================
+
+    sevkiyat_programi_ekle,
+    get_sevkiyat_programi,
+
+    # ======================================
+    # GİRİŞ
+    # ======================================
 
     login_kontrol,
 
-    # Dashboard
+    # ======================================
+    # DASHBOARD
+    # ======================================
+
     toplam_sube_sayisi,
     toplam_urun_sayisi,
     toplam_siparis_sayisi
 )
-
 
 
 app = Flask(
@@ -89,14 +126,21 @@ app = Flask(
     static_folder="../static"
 )
 
+
 @app.before_request
 def test():
-    print("METHOD:", request.method, "URL:", request.path)
+    print(
+        "METHOD:",
+        request.method,
+        "URL:",
+        request.path
+    )
+
 
 app.secret_key = "siparis_sistemi_2026"
 
-
 create_tables()
+
 
 # ==========================
 # SİPARİŞ DURUMLARI
@@ -110,6 +154,7 @@ SIPARIS_DURUMLARI = [
     "Tamamlandı"
 ]
 
+
 # ==========================
 # YETKİ KONTROL
 # ==========================
@@ -119,21 +164,15 @@ def admin_kontrol():
     if "giris" not in session:
         return redirect("/")
 
-
     if session.get("yetki") != "admin":
         abort(403)
 
-
     return None
-
-
 
 
 # ==========================
 # LOGIN
 # ==========================
-
-
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -158,12 +197,10 @@ def login():
 
             return redirect("/dashboard")
 
-
         kullanici = login_kontrol(
             kullanici_adi,
             sifre
         )
-
 
         if kullanici:
 
@@ -176,12 +213,10 @@ def login():
 
             return redirect("/dashboard")
 
-
         return """
         <h2>Kullanıcı adı veya şifre hatalı.</h2>
         <a href="/">Tekrar Dene</a>
         """
-
 
     return render_template("login.html")
 
@@ -198,7 +233,6 @@ def logout():
     return redirect("/")
 
 
-
 # ==========================
 # DASHBOARD
 # ==========================
@@ -209,13 +243,10 @@ def dashboard():
     if "giris" not in session:
         return redirect("/")
 
-
     return render_template(
         "dashboard.html",
-
         yetki=session["yetki"],
         sube=session["sube_adi"],
-
         siparis_sayisi=toplam_siparis_sayisi(),
         sube_sayisi=toplam_sube_sayisi(),
         urun_sayisi=toplam_urun_sayisi()
@@ -234,9 +265,7 @@ def subeler():
     if sonuc:
         return sonuc
 
-
     liste = get_subeler()
-
 
     return render_template(
         "subeler.html",
@@ -244,95 +273,74 @@ def subeler():
     )
 
 
-
 @app.route("/yeni-sube", methods=["GET", "POST"])
 def yeni_sube():
-
 
     sonuc = admin_kontrol()
 
     if sonuc:
         return sonuc
 
-
     if request.method == "POST":
 
-
         add_sube(
-    request.form["sube_adi"],
-    request.form["kullanici_adi"],
-    request.form["sifre"],
-    request.form["yetkili"],
-    request.form["telefon"],
-    request.form["eposta"],
-    request.form["il"],
-    request.form["ilce"],
-    request.form["adres"],
-    request.form["durum"],
-
-    request.form["uretim_gunu"],
-    request.form["sevkiyat_gunu"],
-    request.form["sevkiyat_saati"],
-    request.form["teslim_suresi"]
-)
-
+            request.form["sube_adi"],
+            request.form["kullanici_adi"],
+            request.form["sifre"],
+            request.form["yetkili"],
+            request.form["telefon"],
+            request.form["eposta"],
+            request.form["il"],
+            request.form["ilce"],
+            request.form["adres"],
+            request.form["durum"],
+            request.form["uretim_gunu"],
+            request.form["sevkiyat_gunu"],
+            request.form["sevkiyat_saati"],
+            request.form["teslim_suresi"]
+        )
 
         return redirect("/subeler")
-
 
     return render_template(
         "yeni_sube.html"
     )
 
 
-
 @app.route(
     "/sube-duzenle/<int:id>",
-    methods=["GET","POST"]
+    methods=["GET", "POST"]
 )
 def sube_duzenle(id):
-
 
     sonuc = admin_kontrol()
 
     if sonuc:
         return sonuc
 
-
-
     if request.method == "POST":
 
-
         update_sube(
-
-    id,
-
-    request.form["sube_adi"],
-    request.form["kullanici_adi"],
-    request.form["sifre"],
-    request.form["yetkili"],
-    request.form["telefon"],
-    request.form["eposta"],
-    request.form["il"],
-    request.form["ilce"],
-    request.form["adres"],
-    request.form["durum"],
-
-    request.form["uretim_gunu"],
-    request.form["sevkiyat_gunu"],
-    request.form["sevkiyat_saati"],
-    request.form["teslim_suresi"]
-
-)
-        
-
+            id,
+            request.form["sube_adi"],
+            request.form["kullanici_adi"],
+            request.form["sifre"],
+            request.form["yetkili"],
+            request.form["telefon"],
+            request.form["eposta"],
+            request.form["il"],
+            request.form["ilce"],
+            request.form["adres"],
+            request.form["durum"],
+            request.form["uretim_gunu"],
+            request.form["sevkiyat_gunu"],
+            request.form["sevkiyat_saati"],
+            request.form["teslim_suresi"]
+        )
 
         return redirect("/subeler")
 
-
-
     sube = get_sube(id)
-
 
     return render_template(
         "sube_duzenle.html",
@@ -340,26 +348,17 @@ def sube_duzenle(id):
     )
 
 
-
 @app.route("/sube-sil/<int:id>")
 def sube_sil(id):
-
 
     sonuc = admin_kontrol()
 
     if sonuc:
         return sonuc
 
-
-
     delete_sube(id)
 
-
     return redirect("/subeler")
-
-    
-
-
 
 
 # ==========================
@@ -374,19 +373,23 @@ def urunler():
     if sonuc:
         return sonuc
 
-
     liste = get_urunler()
-
 
     return render_template(
         "urunler.html",
         urunler=liste
     )
 
+
+# ==========================
+# FİNANS
+# ==========================
+
 @app.route("/finans", methods=["GET", "POST"])
 def finans():
 
     sonuc = admin_kontrol()
+
     if sonuc:
         return sonuc
 
@@ -456,6 +459,10 @@ def finans():
     )
 
 
+# ==========================
+# RAPORLAR
+# ==========================
+
 @app.route("/raporlar")
 def raporlar():
 
@@ -467,6 +474,10 @@ def raporlar():
     return render_template("raporlar.html")
 
 
+# ==========================
+# AI
+# ==========================
+
 @app.route("/ai")
 def ai():
 
@@ -476,7 +487,6 @@ def ai():
         return sonuc
 
     return render_template("ai.html")
-
 
 
 # ======================================
@@ -501,7 +511,6 @@ def stok_giris():
     )
 
     if miktar <= 0:
-
         return redirect("/stoklar")
 
     merkez_stok_giris(
@@ -522,49 +531,44 @@ def stok_giris():
     return redirect("/stoklar")
 
 
+# ======================================
+# YENİ ÜRÜN
+# ======================================
 
-@app.route("/yeni-urun", methods=["GET", "POST"])
+@app.route(
+    "/yeni-urun",
+    methods=["GET", "POST"]
+)
 def yeni_urun():
-
 
     sonuc = admin_kontrol()
 
     if sonuc:
         return sonuc
 
-
-
     if request.method == "POST":
 
-
         add_urun(
-
-    request.form["urun_kodu"],
-    request.form["urun_adi"],
-    request.form["kategori"],
-    request.form["birim"],
-    request.form["durum"],
-    request.form["palet_kapasitesi"],
-    request.form["urun_tipi"],
-    request.form.get("koli_agirligi",0)
-
-)
-
+            request.form["urun_kodu"],
+            request.form["urun_adi"],
+            request.form["kategori"],
+            request.form["birim"],
+            request.form["durum"],
+            request.form["palet_kapasitesi"],
+            request.form["urun_tipi"],
+            request.form.get("koli_agirligi", 0)
+        )
 
         return redirect("/urunler")
-
-
 
     return render_template(
         "yeni_urun.html"
     )
 
 
-
-
 @app.route(
     "/urun-duzenle/<int:id>",
-    methods=["GET","POST"]
+    methods=["GET", "POST"]
 )
 def urun_duzenle(id):
 
@@ -597,25 +601,17 @@ def urun_duzenle(id):
     )
 
 
-    
-
 @app.route("/urun-sil/<int:id>")
 def urun_sil(id):
-
 
     sonuc = admin_kontrol()
 
     if sonuc:
         return sonuc
 
-
-
     delete_urun(id)
 
-
-
     return redirect("/urunler")
-
 
 
 # ==========================
@@ -625,32 +621,24 @@ def urun_sil(id):
 @app.route("/siparisler")
 def siparisler():
 
-
     if "giris" not in session:
         return redirect("/")
 
-
-
     if session["yetki"] == "admin":
-
 
         liste = get_siparisler()
 
-
     else:
-
 
         liste = get_sube_siparisleri(
             session["sube_id"]
         )
 
-
-
     return render_template(
-    "siparisler.html",
-    siparisler=liste,
-    yetki=session["yetki"]
-)
+        "siparisler.html",
+        siparisler=liste,
+        yetki=session["yetki"]
+    )
 
 
 @app.route("/siparis-detay/<int:id>")
@@ -659,16 +647,10 @@ def siparis_detay(id):
     if "giris" not in session:
         return redirect("/")
 
-
-
     siparis = get_siparis(id)
-
-
 
     if not siparis:
         abort(404)
-
-
 
     # ==========================
     # ŞUBE YETKİ KONTROLÜ
@@ -676,13 +658,8 @@ def siparis_detay(id):
 
     if session["yetki"] == "sube":
 
-
         if siparis[2] != session["sube_adi"]:
-
             abort(403)
-
-
-
 
     detaylar = get_siparis_detaylari(id)
 
@@ -695,28 +672,28 @@ def siparis_detay(id):
         gecmis=gecmis
     )
 
+
 @app.route("/siparis-sil/<int:id>")
 def siparis_sil(id):
 
-
     sonuc = admin_kontrol()
-
 
     if sonuc:
         return sonuc
 
-
-
     delete_siparis(id)
-
-
 
     return redirect("/siparisler")
 
-@app.route("/siparis-durum/<int:id>", methods=["POST"])
+
+@app.route(
+    "/siparis-durum/<int:id>",
+    methods=["POST"]
+)
 def siparis_durum(id):
 
     sonuc = admin_kontrol()
+
     if sonuc:
         return sonuc
 
@@ -726,6 +703,7 @@ def siparis_durum(id):
         abort(404)
 
     eski_durum = siparis[4]
+
     yeni_durum = request.form["durum"]
 
     # Durum değişmemişse kayıt oluşturma
@@ -739,7 +717,9 @@ def siparis_durum(id):
 
     siparis_gecmisi_ekle(
         siparis_id=id,
-        tarih=datetime.now().strftime("%d.%m.%Y %H:%M"),
+        tarih=datetime.now().strftime(
+            "%d.%m.%Y %H:%M"
+        ),
         kullanici=session["sube_adi"],
         eski_durum=eski_durum,
         yeni_durum=yeni_durum
@@ -747,7 +727,119 @@ def siparis_durum(id):
 
     return redirect("/siparisler")
 
-    
+
+# ======================================
+# SEVKİYAT TARİH / SAAT HESABI
+# ======================================
+
+def sevkiyat_zamani_hesapla(
+    siparis_tarihi,
+    sevkiyat_gunu,
+    sevkiyat_saati,
+    teslim_suresi
+):
+
+    try:
+
+        # ----------------------------------
+        # SİPARİŞ TARİHİ
+        # ----------------------------------
+
+        tarih = datetime.strptime(
+            siparis_tarihi,
+            "%Y-%m-%d"
+        )
+
+        # ----------------------------------
+        # SEVKİYAT GÜNLERİ
+        # ----------------------------------
+
+        gunler = {
+            "Pazartesi": 0,
+            "Salı": 1,
+            "Çarşamba": 2,
+            "Perşembe": 3,
+            "Cuma": 4,
+            "Cumartesi": 5,
+            "Pazar": 6
+        }
+
+        hedef_gun = gunler.get(
+            sevkiyat_gunu
+        )
+
+        if hedef_gun is None:
+            return None, None, None
+
+        # ----------------------------------
+        # BİR SONRAKİ SEVKİYAT GÜNÜ
+        # ----------------------------------
+
+        mevcut_gun = tarih.weekday()
+
+        fark = (
+            hedef_gun - mevcut_gun
+        ) % 7
+
+        sevkiyat_tarihi = (
+            tarih +
+            timedelta(days=fark)
+        )
+
+        # ----------------------------------
+        # SEVKİYAT SAATİ
+        # ----------------------------------
+
+        if not sevkiyat_saati:
+            sevkiyat_saati = "18:00"
+
+        saat = datetime.strptime(
+            str(sevkiyat_saati),
+            "%H:%M"
+        ).time()
+
+        atb_cikis = datetime.combine(
+            sevkiyat_tarihi.date(),
+            saat
+        )
+
+        # ----------------------------------
+        # TESLİM SÜRESİ
+        # ----------------------------------
+
+        try:
+
+            teslim_suresi = float(
+                teslim_suresi or 0
+            )
+
+        except:
+
+            teslim_suresi = 0
+
+        # ----------------------------------
+        # ŞUBE TESLİM
+        # ----------------------------------
+
+        sube_teslim = (
+            atb_cikis +
+            timedelta(hours=teslim_suresi)
+        )
+
+        return (
+            sevkiyat_tarihi,
+            atb_cikis,
+            sube_teslim
+        )
+
+    except Exception as e:
+
+        print(
+            "Sevkiyat zamanı hesaplama hatası:",
+            e
+        )
+
+        return None, None, None
 
 
 # ======================================
@@ -766,7 +858,6 @@ def siparis_onayla(id):
     if sonuc:
         return sonuc
 
-
     # ==================================
     # SİPARİŞİ BUL
     # ==================================
@@ -776,33 +867,246 @@ def siparis_onayla(id):
     if not siparis:
         abort(404)
 
-
     # ==================================
     # SADECE HAZIRLANDI DURUMUNDA
     # ONAYLANABİLİR
     # ==================================
 
     if siparis[4] != "Hazırlandı":
-
         return redirect("/siparisler")
 
+    # ==================================
+    # ŞUBE ID
+    # ==================================
+
+    sube_id = get_siparis_sube_id(id)
+
+    if not sube_id:
+        return redirect("/siparisler")
 
     # ==================================
-    # STOK TRANSFERİ
+    # SİPARİŞ TARİHİ
+    # ==================================
+
+    siparis_tarihi = siparis[3]
+
+    # ==================================
+    # ŞUBE SEVKİYAT BİLGİLERİ
+    # ==================================
+
+    sube_bilgileri = get_sube_sevkiyat_bilgileri(
+        sube_id
+    )
+
+    if not sube_bilgileri:
+        return redirect("/siparisler")
+
+    sevkiyat_gunu = sube_bilgileri[0]
+
+    sevkiyat_saati = sube_bilgileri[1]
+
+    teslim_suresi = sube_bilgileri[2]
+
+    # ==================================
+    # SİPARİŞ DETAYLARI
+    # ==================================
+
+    detaylar = get_siparis_detaylari_sevkiyat(id)
+
+    # ==================================
+    # PALET TOPLAMLARI
+    # ==================================
+
+    donuk = 0
+    soguk = 0
+
+    donuk_esdeger = 0
+    soguk_esdeger = 0
+
+    # ==================================
+    # ÜRÜNLERİ TEK TEK İNCELE
+    # ==================================
+
+    for detay in detaylar:
+
+        # ----------------------------------
+        # detay:
+        #
+        # 0 = urun_id
+        # 1 = urun_adi
+        # 2 = urun_tipi
+        # 3 = palet_kapasitesi
+        # 4 = miktar
+        # ----------------------------------
+
+        urun_tipi = detay[2]
+
+        palet_kapasitesi = float(
+            detay[3] or 0
+        )
+
+        miktar = float(
+            detay[4] or 0
+        )
+
+        # ----------------------------------
+        # PALET KAPASİTESİ YOKSA GEÇ
+        # ----------------------------------
+
+        if palet_kapasitesi <= 0:
+            continue
+
+        # ==================================
+        # PALET EŞDEĞERİ
+        # ==================================
+
+        palet_esdegeri = (
+            miktar / palet_kapasitesi
+        )
+
+        # ==================================
+        # EXCEL YUVARLAMA KURALI
+        #
+        # 0,00 - 0,11 → aşağı
+        # 0,12 ve üstü → yukarı
+        # ==================================
+
+        tam_kisim = int(
+            palet_esdegeri
+        )
+
+        ondalik_kisim = (
+            palet_esdegeri
+            - tam_kisim
+        )
+
+        if ondalik_kisim < 0.12:
+
+            fiziksel_palet = tam_kisim
+
+        else:
+
+            fiziksel_palet = tam_kisim + 1
+
+        # ==================================
+        # MİKTAR VARSA EN AZ 1 PALET
+        # ==================================
+
+        if (
+            miktar > 0
+            and fiziksel_palet == 0
+        ):
+
+            fiziksel_palet = 1
+
+        # ==================================
+        # DONUK
+        # ==================================
+
+        if urun_tipi == "Donuk":
+
+            donuk += fiziksel_palet
+
+            # DOLULUK İÇİN PALET EŞDEĞERİ
+            donuk_esdeger += palet_esdegeri
+
+        # ==================================
+        # SOĞUK
+        # ==================================
+
+        elif urun_tipi == "Soğuk":
+
+            soguk += fiziksel_palet
+
+            # DOLULUK İÇİN PALET EŞDEĞERİ
+            soguk_esdeger += palet_esdegeri
+
+    # ==================================
+    # DOLULUK HESAPLARI
+    # ==================================
+
+    donuk_doluluk = 0
+    soguk_doluluk = 0
+
+    # ==================================
+    # DONUK DOLULUK
+    # ==================================
+
+    if donuk > 0:
+
+        donuk_doluluk = (
+            donuk_esdeger / donuk
+        ) * 100
+
+    # ==================================
+    # SOĞUK DOLULUK
+    # ==================================
+
+    if soguk > 0:
+
+        soguk_doluluk = (
+            soguk_esdeger / soguk
+        ) * 100
+
+    # ==================================
+    # SEVKİYAT ZAMANI HESAPLA
+    # ==================================
+
+    (
+        sevkiyat_tarihi,
+        atb_cikis,
+        sube_teslim
+    ) = sevkiyat_zamani_hesapla(
+        siparis_tarihi,
+        sevkiyat_gunu,
+        sevkiyat_saati,
+        teslim_suresi
+    )
+
+    if not sevkiyat_tarihi:
+        return redirect("/siparisler")
+
+    hafta = sevkiyat_tarihi.isocalendar().week
+
+    # ==================================
+    # SEVKİYAT PROGRAMINA KAYIT
+    # ==================================
+
+    sevkiyat_programi_ekle(
+        hafta=hafta,
+        tarih=sevkiyat_tarihi,
+        firma="Belirlenmedi",
+        sube_id=sube_id,
+        donuk=donuk,
+        soguk=soguk,
+        donuk_doluluk=donuk_doluluk,
+        soguk_doluluk=soguk_doluluk,
+        atb_cikis=atb_cikis.strftime(
+            "%d.%m.%Y %H:%M"
+        ),
+        sube_teslim=sube_teslim.strftime(
+            "%d.%m.%Y %H:%M"
+        ),
+        palet_fiyat=0,
+        toplam_maliyet=0,
+        kayip_maliyeti=0,
+        durum="PLANLANDI"
+    )
+
+    # ==================================
+    # STOKLARI AKTAR
     # ==================================
 
     siparis_stoklarini_aktar(id)
 
-
     # ==================================
-    # SİPARİŞ DURUMUNU ONAYLA
+    # SİPARİŞ DURUMU
     # ==================================
 
     siparis_durum_guncelle(
         id,
         "Onaylandı"
     )
-
 
     # ==================================
     # SİPARİŞ GEÇMİŞİ
@@ -821,29 +1125,32 @@ def siparis_onayla(id):
         yeni_durum="Onaylandı"
     )
 
+    # ==================================
+    # GERİ DÖN
+    # ==================================
 
     return redirect("/siparisler")
-    
 
 
+# ======================================
+# SİPARİŞ DÜZENLE
+# ======================================
 
-@app.route("/siparis-duzenle/<int:id>", methods=["GET", "POST"])
+@app.route(
+    "/siparis-duzenle/<int:id>",
+    methods=["GET", "POST"]
+)
 def siparis_duzenle(id):
 
-
     siparis = get_siparis(id)
-
 
     if not siparis:
         return "Sipariş bulunamadı"
 
-
     durum = siparis[4]
-
 
     # ŞUBE KONTROLÜ
     if session.get("yetki") == "sube":
-
 
         if durum != "Hazırlandı":
 
@@ -857,55 +1164,37 @@ def siparis_duzenle(id):
             </a>
             """
 
-
     if request.method == "POST":
-
-
 
         detaylar = get_siparis_detaylari(id)
 
-
-
         for detay in detaylar:
-
-
 
             yeni_miktar = request.form.get(
                 f"miktar_{detay[0]}"
             )
 
-
-
             if yeni_miktar is not None:
-
 
                 update_siparis_detay(
                     detay[0],
                     yeni_miktar
                 )
 
-
-
         yeni_urun = request.form.get(
             "yeni_urun"
         )
-
 
         yeni_miktar = request.form.get(
             "yeni_miktar"
         )
 
-
-
         if yeni_urun and yeni_miktar:
-
-
 
             if not sipariste_urun_var_mi(
                 id,
                 yeni_urun
             ):
-
 
                 siparise_urun_ekle(
                     id,
@@ -913,15 +1202,9 @@ def siparis_duzenle(id):
                     yeni_miktar
                 )
 
-
-
         return redirect(
             f"/siparis-duzenle/{id}"
         )
-
-
-
-
 
     siparis = get_siparis(id)
 
@@ -930,8 +1213,6 @@ def siparis_duzenle(id):
     urunler = get_urunler()
 
     toplam = toplam_koli(id)
-
-
 
     return render_template(
         "siparis_duzenle.html",
@@ -942,12 +1223,6 @@ def siparis_duzenle(id):
     )
 
 
-
-
-
-
-
-
 @app.route(
     "/siparis-detay-sil/<int:detay_id>/<int:siparis_id>"
 )
@@ -956,81 +1231,63 @@ def siparis_detay_sil(
     siparis_id
 ):
 
-
     sonuc = admin_kontrol()
-
 
     if sonuc:
         return sonuc
 
-
-
     delete_siparis_detay(
         detay_id
     )
-
-
 
     return redirect(
         f"/siparis-duzenle/{siparis_id}"
     )
 
 
-
-
-
-
+# ======================================
+# YENİ SİPARİŞ
+# ======================================
 
 @app.route(
     "/yeni-siparis",
-    methods=["GET","POST"]
+    methods=["GET", "POST"]
 )
 def yeni_siparis():
-
 
     if "giris" not in session:
         return redirect("/")
 
-
-
-
     if request.method == "POST":
-
-
 
         # ADMIN istediği şubeyi seçebilir
         if session["yetki"] == "admin":
 
             sube_id = request.form["sube_id"]
 
-
         # ŞUBE sadece kendi adına sipariş verir
         else:
 
             sube_id = session["sube_id"]
 
+        tarih = datetime.now().strftime(
+            "%Y-%m-%d"
+        )
 
-
-        tarih = datetime.now().strftime("%Y-%m-%d")
-
-
-        urunler_json = request.form["urunler_json"]
-
+        urunler_json = request.form[
+            "urunler_json"
+        ]
 
         urun_listesi = json.loads(
             urunler_json
         )
 
-
-
         siparis_no = (
             "SP-"
             + datetime.now().strftime("%Y%m%d")
             + "-"
-            + str(random.randint(1000,9999))
+            + str(random.randint(1000, 9999))
         )
-
-
 
         siparis_id = add_siparis(
             siparis_no,
@@ -1039,10 +1296,7 @@ def yeni_siparis():
             "Hazırlandı"
         )
 
-
-
         for urun in urun_listesi:
-
 
             add_siparis_detay(
                 siparis_id,
@@ -1050,12 +1304,7 @@ def yeni_siparis():
                 urun["miktar"]
             )
 
-
-
         return redirect("/siparisler")
-
-
-
 
     # ADMIN bütün şubeleri görür
     if session["yetki"] == "admin":
@@ -1065,15 +1314,18 @@ def yeni_siparis():
     else:
 
         # Aktif sipariş kontrolü
-        if aktif_siparis_var_mi(session["sube_id"]):
+        if aktif_siparis_var_mi(
+            session["sube_id"]
+        ):
 
             return """
-    <script>
-        alert("Bu hafta zaten aktif bir siparişiniz bulunmaktadır.");
-        window.location="/siparisler";
-    </script>
-    """
-    
+            <script>
+                alert(
+                    "Bu hafta zaten aktif bir siparişiniz bulunmaktadır."
+                );
+                window.location="/siparisler";
+            </script>
+            """
 
         subeler = [
             (
@@ -1096,7 +1348,9 @@ def yeni_siparis():
 
         secili_sube = session["sube_id"]
 
-    limit = get_sube_limit(secili_sube)
+    limit = get_sube_limit(
+        secili_sube
+    )
 
     return render_template(
         "yeni_siparis.html",
@@ -1104,6 +1358,7 @@ def yeni_siparis():
         urunler=urunler,
         limit=limit
     )
+
 
 # ==================================
 # ŞUBE LİMİT GETİRME (AJAX)
@@ -1113,7 +1368,9 @@ def yeni_siparis():
 def get_sube_limit_ajax(sube_id):
 
     if "giris" not in session:
-        return {"limit": 0}
+        return {
+            "limit": 0
+        }
 
     limit = get_sube_limit(
         sube_id
@@ -1124,9 +1381,10 @@ def get_sube_limit_ajax(sube_id):
     }
 
 
- # ======================================
+# ======================================
 # STOKLAR
 # ======================================
+
 @app.route("/stoklar")
 def stoklar():
 
@@ -1134,7 +1392,6 @@ def stoklar():
 
     if sonuc:
         return sonuc
-
 
     # ==================================
     # FİLTRELER
@@ -1170,15 +1427,21 @@ def stoklar():
         ""
     )
 
-
     # ==================================
     # BOŞ DEĞERLERİ NONE YAP
     # ==================================
 
-    sube_id = int(sube_id) if sube_id else None
+    sube_id = (
+        int(sube_id)
+        if sube_id
+        else None
+    )
 
-    urun_id = int(urun_id) if urun_id else None
-
+    urun_id = (
+        int(urun_id)
+        if urun_id
+        else None
+    )
 
     # ==================================
     # MERKEZ STOKLARI
@@ -1186,28 +1449,24 @@ def stoklar():
 
     merkez_stok = get_merkez_stok()
 
-
     # ==================================
     # ŞUBE STOKLARI
     # ==================================
 
     sube_stoklari = get_sube_stoklari()
 
-
     # ==================================
     # STOK HAREKETLERİ
     # ==================================
 
     stok_hareketleri = get_stok_hareketleri(
-    baslangic or None,
-    bitis or None,
-    sube_id,
-    urun_id,
-    hareket_tipi or None,
-    arama.strip() or None
-)
-
-
+        baslangic or None,
+        bitis or None,
+        sube_id,
+        urun_id,
+        hareket_tipi or None,
+        arama.strip() or None
+    )
 
     # ==================================
     # FİLTRE SEÇENEKLERİ
@@ -1217,34 +1476,99 @@ def stoklar():
 
     filtre_urunler = get_tum_urunler()
 
-
     return render_template(
         "stoklar.html",
-
         merkez_stok=merkez_stok,
-
         sube_stoklari=sube_stoklari,
-
         stok_hareketleri=stok_hareketleri,
-
         filtre_subeler=filtre_subeler,
-
         filtre_urunler=filtre_urunler,
-
         baslangic=baslangic,
-
         bitis=bitis,
-
         secili_sube=sube_id,
-
         secili_urun=urun_id,
-
         secili_hareket=hareket_tipi,
-
         arama=arama
     )
-    
-    
+
+
+# ======================================
+# SEVKİYAT PROGRAMI
+# ======================================
+
+@app.route("/sevkiyat")
+def sevkiyat():
+
+    sonuc = admin_kontrol()
+
+    if sonuc:
+        return sonuc
+
+    # ==================================
+    # FİLTRELER
+    # ==================================
+
+    baslangic = request.args.get(
+        "baslangic",
+        ""
+    )
+
+    bitis = request.args.get(
+        "bitis",
+        ""
+    )
+
+    sube_id = request.args.get(
+        "sube_id",
+        ""
+    )
+
+    firma = request.args.get(
+        "firma",
+        ""
+    )
+
+    # ==================================
+    # BOŞ DEĞERLERİ NONE YAP
+    # ==================================
+
+    sube_id = (
+        int(sube_id)
+        if sube_id
+        else None
+    )
+
+    # ==================================
+    # SEVKİYAT PROGRAMI
+    # ==================================
+
+    sevkiyatlar = get_sevkiyat_programi(
+        baslangic=baslangic or None,
+        bitis=bitis or None,
+        sube_id=sube_id,
+        firma=firma or None
+    )
+
+    # ==================================
+    # FİLTRE SEÇENEKLERİ
+    # ==================================
+
+    filtre_subeler = get_tum_subeler()
+
+    # ==================================
+    # SAYFAYI GÖSTER
+    # ==================================
+
+    return render_template(
+        "sevkiyat.html",
+        sevkiyatlar=sevkiyatlar,
+        filtre_subeler=filtre_subeler,
+        baslangic=baslangic,
+        bitis=bitis,
+        secili_sube=sube_id,
+        secili_firma=firma
+    )
+
 
 # ======================================
 # ŞUBE SATIŞ EXCEL AKTARIMI
@@ -1299,7 +1623,6 @@ def sube_satis_aktar():
 
                 basliklar.append("")
 
-
         # ======================================
         # GEREKLİ SÜTUN KONTROLÜ
         # ======================================
@@ -1331,7 +1654,6 @@ def sube_satis_aktar():
                 </script>
                 """
 
-
         # ======================================
         # SÜTUNLARIN YERLERİNİ BUL
         # ======================================
@@ -1340,17 +1662,16 @@ def sube_satis_aktar():
 
         urun_index = basliklar.index("Ürün Adı")
 
-        miktar_index = basliklar.index("Satış Miktarı")
-
+        miktar_index = basliklar.index(
+            "Satış Miktarı"
+        )
 
         # ======================================
         # SONUÇ SAYACI
         # ======================================
 
         basarili = 0
-
         hatali = 0
-
 
         # ======================================
         # EXCEL SATIRLARINI OKU
@@ -1370,16 +1691,13 @@ def sube_satis_aktar():
             ):
 
                 hatali += 1
-
                 continue
-
 
             sube_adi = satir[sube_index]
 
             urun_adi = satir[urun_index]
 
             miktar = satir[miktar_index]
-
 
             # ==================================
             # BOŞ SATIRLARI GEÇ
@@ -1393,7 +1711,6 @@ def sube_satis_aktar():
 
                 continue
 
-
             # ==================================
             # MİKTAR KONTROLÜ
             # ==================================
@@ -1405,16 +1722,12 @@ def sube_satis_aktar():
             except:
 
                 hatali += 1
-
                 continue
-
 
             if miktar <= 0:
 
                 hatali += 1
-
                 continue
-
 
             # ==================================
             # ŞUBE + ÜRÜN EŞLEŞTİR
@@ -1425,18 +1738,14 @@ def sube_satis_aktar():
                 str(urun_adi).strip()
             )
 
-
             if not eslesme:
 
                 hatali += 1
-
                 continue
-
 
             sube_id = eslesme[0]
 
             urun_id = eslesme[1]
-
 
             # ==================================
             # ŞUBE STOKTAN SATIŞI DÜŞ
@@ -1448,9 +1757,7 @@ def sube_satis_aktar():
                 miktar
             )
 
-
             basarili += 1
-
 
         # ======================================
         # AKTARIM SONUCU
@@ -1469,7 +1776,6 @@ def sube_satis_aktar():
 
         </script>
         """
-
 
     except Exception as e:
 
@@ -1498,18 +1804,15 @@ def excel_rapor():
     if sonuc:
         return sonuc
 
-
     wb = Workbook()
 
     ws = wb.active
 
     ws.title = "Şube Siparişleri"
 
-
     urunler = get_tum_urunler()
 
     subeler = get_tum_subeler()
-
 
     # ==================================
     # BAŞLIK
@@ -1517,9 +1820,7 @@ def excel_rapor():
 
     ws["A1"] = "Ürün"
 
-
     sutun = 2
-
 
     for sube in subeler:
 
@@ -1545,13 +1846,11 @@ def excel_rapor():
 
         sutun += 1
 
-
     # ==================================
     # ÜRÜNLER
     # ==================================
 
     satir = 2
-
 
     for urun in urunler:
 
@@ -1560,9 +1859,7 @@ def excel_rapor():
             column=1
         ).value = urun[1]
 
-
         sutun = 2
-
 
         for sube in subeler:
 
@@ -1571,18 +1868,14 @@ def excel_rapor():
                 urun[0]
             )
 
-
             ws.cell(
                 row=satir,
                 column=sutun
             ).value = miktar
 
-
             sutun += 1
 
-
         satir += 1
-
 
     # ==================================
     # EXCEL DOSYASI OLUŞTUR
@@ -1593,7 +1886,6 @@ def excel_rapor():
     wb.save(dosya)
 
     dosya.seek(0)
-
 
     return send_file(
         dosya,
@@ -1613,21 +1905,17 @@ def excel_rapor():
 
 import os
 
-
 print(
     "Login fonksiyonu =",
     login
 )
-
 
 print(
     "Endpoint =",
     app.view_functions["login"]
 )
 
-
 print("\n===== ROUTES =====")
-
 
 for rule in app.url_map.iter_rules():
 
@@ -1635,7 +1923,6 @@ for rule in app.url_map.iter_rules():
         rule,
         rule.methods
     )
-
 
 print("==================\n")
 
@@ -1654,3 +1941,4 @@ if __name__ == "__main__":
         port=5000,
         debug=True
     )
+    

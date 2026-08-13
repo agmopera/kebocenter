@@ -609,6 +609,59 @@ body{
 
     <div class="card-body">
 
+        <div class="row mb-4">
+
+    <div class="col-md-5">
+
+        <form method="GET" action="/stoklar">
+
+            <label class="form-label fw-bold">
+                Şube Seç
+            </label>
+
+            <div class="input-group">
+
+                <select
+                    name="sube_id"
+                    class="form-select"
+                    onchange="this.form.submit()"
+                >
+
+                    <option value="">
+                        Tüm Şubeler
+                    </option>
+
+                    {% for sube in filtre_subeler %}
+
+                    <option
+                        value="{{ sube[0] }}"
+                        {% if secili_sube == sube[0] %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ sube[1] }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    onclick="window.location.href='/stoklar'"
+                >
+                    Temizle
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
 
         {% if sube_stoklari %}
 

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sevkiyat Programı</title>
+
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+
+    <style>
+
+        body {
+            background-color: #f5f7fb;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .page-title {
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .filter-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .table-card-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table th {
+            white-space: nowrap;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        .table td {
+            vertical-align: middle;
+            font-size: 13px;
+        }
+
+        .sube-adi {
+            font-weight: 600;
+        }
+
+        .donuk {
+            font-weight: 600;
+        }
+
+        .soguk {
+            font-weight: 600;
+        }
+
+        .doluluk {
+            font-weight: 600;
+        }
+
+        .maliyet {
+            font-weight: 600;
+        }
+
+        .durum-badge {
+            font-size: 11px;
+            padding: 6px 10px;
+            border-radius: 20px;
+        }
+
+        .bos-kayit {
+            padding: 60px 20px;
+            text-align: center;
+            color: #6c757d;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container-fluid px-4 py-4">
+
+
+    <!-- ====================================== -->
+    <!-- SAYFA BAŞLIĞI -->
+    <!-- ====================================== -->
+
+    <div class="page-header">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+
+                <h3 class="page-title">
+
+                    <i class="bi bi-truck me-2"></i>
+
+                    Sevkiyat Programı
+
+                </h3>
+
+                <div class="text-muted mt-1">
+
+                    Sevkiyat planı ve lojistik görünümü
+
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <a
+                    href="/dashboard"
+                    class="btn btn-outline-secondary"
+                >
+
+                    <i class="bi bi-arrow-left"></i>
+
+                    Dashboard
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ====================================== -->
+    <!-- FİLTRELER -->
+    <!-- ====================================== -->
+
+    <div class="filter-card">
+
+        <form
+            method="GET"
+            action="/sevkiyat"
+        >
+
+            <div class="row g-3 align-items-end">
+
+
+                <!-- BAŞLANGIÇ TARİHİ -->
+
+                <div class="col-md">
+
+                    <label class="form-label fw-semibold">
+
+                        Başlangıç Tarihi
+
+                    </label>
+
+                    <input
+                        type="date"
+                        name="baslangic"
+                        class="form-control"
+                        value="{{ baslangic }}"
+                    >
+
+                </div>
+
+
+                <!-- BİTİŞ TARİHİ -->
+
+                <div class="col-md">
+
+                    <label class="form-label fw-semibold">
+
+                        Bitiş Tarihi
+
+                    </label>
+
+                    <input
+                        type="date"
+                        name="bitis"
+                        class="form-control"
+                        value="{{ bitis }}"
+                    >
+
+                </div>
+
+
+                <!-- ŞUBE -->
+
+                <div class="col-md">
+
+                    <label class="form-label fw-semibold">
+
+                        Şube
+
+                    </label>
+
+                    <select
+                        name="sube_id"
+                        class="form-select"
+                    >
+
+                        <option value="">
+
+                            Tüm Şubeler
+
+                        </option>
+
+
+                        {% for sube in filtre_subeler %}
+
+                            <option
+                                value="{{ sube[0] }}"
+                                {% if secili_sube == sube[0] %}
+                                    selected
+                                {% endif %}
+                            >
+
+                                {{ sube[1] }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- FİRMA -->
+
+                <div class="col-md">
+
+                    <label class="form-label fw-semibold">
+
+                        Lojistik Firması
+
+                    </label>
+
+                    <select
+                        name="firma"
+                        class="form-select"
+                    >
+
+                        <option value="">
+
+                            Tüm Firmalar
+
+                        </option>
+
+
+                        <option
+                            value="ÖZNİL"
+                            {% if secili_firma == "ÖZNİL" %}
+                                selected
+                            {% endif %}
+                        >
+
+                            ÖZNİL
+
+                        </option>
+
+
+                        <option
+                            value="Narlog"
+                            {% if secili_firma == "Narlog" %}
+                                selected
+                            {% endif %}
+                        >
+
+                            Narlog
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- BUTONLAR -->
+
+                <div class="col-md-auto">
+
+                    <div class="d-flex gap-2">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary px-4"
+                        >
+
+                            <i class="bi bi-funnel me-1"></i>
+
+                            Filtrele
+
+                        </button>
+
+
+                        <a
+                            href="/sevkiyat"
+                            class="btn btn-outline-secondary"
+                            title="Filtreleri Temizle"
+                        >
+
+                            <i class="bi bi-arrow-clockwise"></i>
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+
+    <!-- ====================================== -->
+    <!-- SEVKİYAT TABLOSU -->
+    <!-- ====================================== -->
+
+    <div class="table-card">
+
+
+        <!-- BAŞLIK -->
+
+        <div class="table-card-header">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+
+                    <h5 class="mb-0">
+
+                        <i class="bi bi-calendar-week me-2"></i>
+
+                        Sevkiyat Planı
+
+                    </h5>
+
+                </div>
+
+
+                <span class="badge bg-light text-primary">
+
+                    {{ sevkiyatlar|length }} Kayıt
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        {% if sevkiyatlar %}
+
+
+        <div class="table-responsive">
+
+
+            <table class="table table-hover table-bordered mb-0">
+
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th>#</th>
+
+                        <th>Hafta</th>
+
+                        <th>Tarih</th>
+
+                        <th>Şube</th>
+
+                        <th>Firma</th>
+
+                        <th>Donuk</th>
+
+                        <th>Soğuk</th>
+
+                        <th>Donuk Doluluk</th>
+
+                        <th>Soğuk Doluluk</th>
+
+                        <th>ATB Çıkış</th>
+
+                        <th>Şube Teslim</th>
+
+                        <th>Palet Fiyatı</th>
+
+                        <th>Toplam Maliyet</th>
+
+                        <th>Kayıp Maliyeti</th>
+
+                        <th>Durum</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                {% for sevkiyat in sevkiyatlar %}
+
+
+                    <tr>
+
+
+                        <!-- SIRA -->
+
+                        <td>
+
+                            {{ loop.index }}
+
+                        </td>
+
+
+                        <!-- HAFTA -->
+
+                        <td>
+
+                            <span class="badge bg-primary">
+
+                                {{ sevkiyat[1] }}. Hafta
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- TARİH -->
+
+                        <td>
+
+                            {{ sevkiyat[2] or "-" }}
+
+                        </td>
+
+
+                        <!-- ŞUBE -->
+
+                        <td class="sube-adi">
+
+                            {{ sevkiyat[5] }}
+
+                        </td>
+
+
+                        <!-- FİRMA -->
+
+                        <td>
+
+                            {{ sevkiyat[3] or "-" }}
+
+                        </td>
+
+
+                        <!-- DONUK -->
+<td class="donuk">
+
+    {{ "%.0f"|format(sevkiyat[6] or 0) }} 
+
+</td>
+
+
+<!-- SOĞUK -->
+<td class="soguk">
+
+    {{ "%.0f"|format(sevkiyat[7] or 0) }} 
+
+</td>
+
+
+                        <!-- DONUK DOLULUK -->
+<td class="doluluk">
+
+    {% if sevkiyat[8] is not none %}
+
+        {{ "%.2f"|format(sevkiyat[8]) }}%
+
+    {% else %}
+
+        -
+
+    {% endif %}
+
+</td>
+
+
+<!-- SOĞUK DOLULUK -->
+<td class="doluluk">
+
+    {% if sevkiyat[9] is not none %}
+
+        {{ "%.2f"|format(sevkiyat[9]) }}%
+
+    {% else %}
+
+        -
+
+    {% endif %}
+
+</td>
+
+
+                        <!-- ATB ÇIKIŞ -->
+
+                        <td>
+
+                            {{ sevkiyat[10] or "-" }}
+
+                        </td>
+
+
+                        <!-- ŞUBE TESLİM -->
+
+                        <td>
+
+                            {{ sevkiyat[11] or "-" }}
+
+                        </td>
+
+
+                        <!-- PALET FİYATI -->
+
+                        <td class="maliyet">
+
+                            {{ "{:,.0f}".format(sevkiyat[12] or 0) }} ₺
+
+                        </td>
+
+
+                        <!-- TOPLAM MALİYET -->
+
+                        <td class="maliyet">
+
+                            {{ "{:,.0f}".format(sevkiyat[13] or 0) }} ₺
+
+                        </td>
+
+
+                        <!-- KAYIP -->
+
+                        <td>
+
+                            {% if sevkiyat[14] and sevkiyat[14] > 0 %}
+
+                                <span class="text-danger fw-semibold">
+
+                                    {{ "{:,.0f}".format(sevkiyat[14]) }} ₺
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="text-muted">
+
+                                    0 ₺
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- DURUM -->
+
+                        <td>
+
+                            {% if sevkiyat[15] == "TAMAMLANDI" %}
+
+                                <span class="badge bg-success durum-badge">
+
+                                    TAMAMLANDI
+
+                                </span>
+
+                            {% elif sevkiyat[15] == "IPTAL" %}
+
+                                <span class="badge bg-danger durum-badge">
+
+                                    İPTAL
+
+                                </span>
+
+                            {% elif sevkiyat[15] == "YOLDA" %}
+
+                                <span class="badge bg-warning text-dark durum-badge">
+
+                                    YOLDA
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-primary durum-badge">
+
+                                    {{ sevkiyat[15] or "PLANLANDI" }}
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+        {% else %}
+
+
+        <!-- KAYIT YOK -->
+
+        <div class="bos-kayit">
+
+            <i
+                class="bi bi-truck"
+                style="font-size: 48px;"
+            ></i>
+
+            <h5 class="mt-3">
+
+                Sevkiyat kaydı bulunamadı
+
+            </h5>
+
+            <p class="mb-0">
+
+                Seçtiğiniz filtrelere uygun sevkiyat programı bulunmuyor.
+
+            </p>
+
+        </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+</div>
+
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+></script>
+
+
+</body>
+
+</html>

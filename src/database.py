@@ -271,6 +271,48 @@ CREATE TABLE IF NOT EXISTS siparis_gecmisi(
 
         )
     """)
+    # ======================================
+# SEVKİYAT PROGRAMI
+# ======================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS sevkiyat_programi(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        hafta INTEGER,
+
+        tarih TEXT,
+
+        firma TEXT,
+
+        sube_id INTEGER,
+
+        donuk REAL DEFAULT 0,
+
+        soguk REAL DEFAULT 0,
+
+        donuk_doluluk REAL DEFAULT 0,
+
+        soguk_doluluk REAL DEFAULT 0,
+
+        atb_cikis TEXT,
+
+        sube_teslim TEXT,
+
+        palet_fiyat REAL DEFAULT 0,
+
+        toplam_maliyet REAL DEFAULT 0,
+
+        kayip_maliyeti REAL DEFAULT 0,
+
+        durum TEXT DEFAULT 'PLANLANDI',
+
+        FOREIGN KEY(sube_id)
+        REFERENCES subeler(id)
+
+    )
+""")
 
 
     # ======================================
@@ -830,6 +872,67 @@ def get_siparis_detaylari(siparis_id):
     conn.close()
 
     return sonuc
+
+    # ==================================================
+# SİPARİŞİN ŞUBE ID'SİNİ GETİR
+# ==================================================
+
+def get_siparis_sube_id(siparis_id):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT sube_id
+        FROM siparisler
+        WHERE id=?
+    """, (
+        siparis_id,
+    ))
+
+    sonuc = cursor.fetchone()
+
+    conn.close()
+
+    if sonuc:
+        return sonuc[0]
+
+    return None
+
+  # ==================================================
+# SİPARİŞ DETAYLARI + ÜRÜN TİPİ + PALET KAPASİTESİ
+# ==================================================
+
+def get_siparis_detaylari_sevkiyat(siparis_id):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            d.urun_id,
+            u.urun_adi,
+            u.urun_tipi,
+            u.palet_kapasitesi,
+            d.miktar
+
+        FROM siparis_detay d
+
+        INNER JOIN urunler u
+            ON d.urun_id = u.id
+
+        WHERE d.siparis_id = ?
+
+        ORDER BY u.urun_adi
+    """, (
+        siparis_id,
+    ))
+
+    sonuc = cursor.fetchall()
+
+    conn.close()
+
+    return sonuc
     
 def delete_siparis(id):
 
@@ -1337,6 +1440,33 @@ def get_sube_limit(sube_id):
 
     return 0
 
+    # ======================================
+# ŞUBE SEVKİYAT BİLGİLERİ
+# ======================================
+
+def get_sube_sevkiyat_bilgileri(sube_id):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            sevkiyat_gunu,
+            sevkiyat_saati,
+            teslim_suresi
+        FROM subeler
+        WHERE id=?
+    """, (
+        sube_id,
+    ))
+
+    sonuc = cursor.fetchone()
+
+    conn.close()
+
+    return sonuc
+    
+
 def aktif_siparis_var_mi(sube_id):
 
     conn = connect_database()
@@ -1656,32 +1786,59 @@ def get_stok_hareketleri(
 # ŞUBE STOKLARINI GETİR
 # ======================================
 
-def get_sube_stoklari():
+def get_sube_stoklari(sube_id=None):
 
     conn = connect_database()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT
-            ss.sube_id,
-            sb.sube_adi,
-            ss.urun_id,
-            u.urun_adi,
-            u.birim,
-            ss.miktar
+    if sube_id:
+        cursor.execute("""
+            SELECT
+                ss.sube_id,
+                sb.sube_adi,
+                ss.urun_id,
+                u.urun_adi,
+                u.birim,
+                ss.miktar
 
-        FROM sube_stok ss
+            FROM sube_stok ss
 
-        INNER JOIN subeler sb
-            ON ss.sube_id = sb.id
+            INNER JOIN subeler sb
+                ON ss.sube_id = sb.id
 
-        INNER JOIN urunler u
-            ON ss.urun_id = u.id
+            INNER JOIN urunler u
+                ON ss.urun_id = u.id
 
-        ORDER BY
-            sb.sube_adi,
-            u.urun_adi
-    """)
+            WHERE ss.sube_id = ?
+
+            ORDER BY
+                u.urun_adi
+        """, (
+            sube_id,
+        ))
+
+    else:
+        cursor.execute("""
+            SELECT
+                ss.sube_id,
+                sb.sube_adi,
+                ss.urun_id,
+                u.urun_adi,
+                u.birim,
+                ss.miktar
+
+            FROM sube_stok ss
+
+            INNER JOIN subeler sb
+                ON ss.sube_id = sb.id
+
+            INNER JOIN urunler u
+                ON ss.urun_id = u.id
+
+            ORDER BY
+                sb.sube_adi,
+                u.urun_adi
+        """)
 
     sonuc = cursor.fetchall()
 
@@ -2087,6 +2244,186 @@ def get_sube_urun_id(
     ))
 
     sonuc = cursor.fetchone()
+
+    conn.close()
+
+    return sonuc
+
+    # ==================================================
+# SEVKİYAT PROGRAMINA KAYIT EKLE
+# ==================================================
+
+def sevkiyat_programi_ekle(
+    hafta,
+    tarih,
+    firma,
+    sube_id,
+    donuk,
+    soguk,
+    donuk_doluluk,
+    soguk_doluluk,
+    atb_cikis,
+    sube_teslim,
+    palet_fiyat,
+    toplam_maliyet,
+    kayip_maliyeti,
+    durum="PLANLANDI"
+):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO sevkiyat_programi
+        (
+            hafta,
+            tarih,
+            firma,
+            sube_id,
+            donuk,
+            soguk,
+            donuk_doluluk,
+            soguk_doluluk,
+            atb_cikis,
+            sube_teslim,
+            palet_fiyat,
+            toplam_maliyet,
+            kayip_maliyeti,
+            durum
+        )
+
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        hafta,
+        tarih,
+        firma,
+        sube_id,
+        donuk,
+        soguk,
+        donuk_doluluk,
+        soguk_doluluk,
+        atb_cikis,
+        sube_teslim,
+        palet_fiyat,
+        toplam_maliyet,
+        kayip_maliyeti,
+        durum
+    ))
+
+    sevkiyat_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    return sevkiyat_id
+
+# ==================================================
+# SEVKİYAT PROGRAMINI GETİR
+# ==================================================
+
+def get_sevkiyat_programi(
+    baslangic=None,
+    bitis=None,
+    sube_id=None,
+    firma=None
+):
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    sorgu = """
+        SELECT
+            s.id,
+            s.hafta,
+            s.tarih,
+            s.firma,
+            sb.id,
+            sb.sube_adi,
+            s.donuk,
+            s.soguk,
+            s.donuk_doluluk,
+            s.soguk_doluluk,
+            s.atb_cikis,
+            s.sube_teslim,
+            s.palet_fiyat,
+            s.toplam_maliyet,
+            s.kayip_maliyeti,
+            s.durum
+
+        FROM sevkiyat_programi s
+
+        INNER JOIN subeler sb
+            ON s.sube_id = sb.id
+
+        WHERE 1=1
+    """
+
+    parametreler = []
+
+    # ======================================
+    # BAŞLANGIÇ TARİHİ
+    # ======================================
+
+    if baslangic:
+
+        sorgu += """
+            AND date(s.tarih) >= date(?)
+        """
+
+        parametreler.append(baslangic)
+
+    # ======================================
+    # BİTİŞ TARİHİ
+    # ======================================
+
+    if bitis:
+
+        sorgu += """
+            AND date(s.tarih) <= date(?)
+        """
+
+        parametreler.append(bitis)
+
+    # ======================================
+    # ŞUBE FİLTRESİ
+    # ======================================
+
+    if sube_id:
+
+        sorgu += """
+            AND s.sube_id = ?
+        """
+
+        parametreler.append(sube_id)
+
+    # ======================================
+    # FİRMA FİLTRESİ
+    # ======================================
+
+    if firma:
+
+        sorgu += """
+            AND s.firma = ?
+        """
+
+        parametreler.append(firma)
+
+    # ======================================
+    # SIRALAMA
+    # ======================================
+
+    sorgu += """
+        ORDER BY
+            date(s.tarih),
+            sb.sube_adi
+    """
+
+    cursor.execute(
+        sorgu,
+        parametreler
+    )
+
+    sonuc = cursor.fetchall()
 
     conn.close()
 
