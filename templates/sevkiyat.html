@@ -10,10 +10,15 @@
     <title>Sevkiyat Programı</title>
 
 
+    <!-- Bootstrap -->
+
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         rel="stylesheet"
     >
+
+
+    <!-- Bootstrap Icons -->
 
     <link
         rel="stylesheet"
@@ -27,80 +32,136 @@
             background-color: #f5f7fb;
         }
 
+
         .page-header {
+
             background: white;
+
             border-radius: 14px;
+
             padding: 20px 24px;
+
             margin-bottom: 20px;
+
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
+
         .page-title {
+
             font-weight: 700;
+
             margin: 0;
         }
 
+
         .filter-card {
+
             background: white;
+
             border-radius: 14px;
+
             padding: 20px;
+
             margin-bottom: 20px;
+
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
+
 
         .table-card {
+
             background: white;
+
             border-radius: 14px;
+
             overflow: hidden;
+
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
+
         .table-card-header {
+
             padding: 18px 20px;
+
             border-bottom: 1px solid #eee;
         }
 
+
         .table th {
+
             white-space: nowrap;
+
             font-size: 13px;
+
             vertical-align: middle;
         }
+
 
         .table td {
+
             vertical-align: middle;
+
             font-size: 13px;
         }
 
+
         .sube-adi {
+
             font-weight: 600;
         }
+
 
         .donuk {
+
             font-weight: 600;
         }
+
 
         .soguk {
+
             font-weight: 600;
         }
+
 
         .doluluk {
+
             font-weight: 600;
         }
+
 
         .maliyet {
+
             font-weight: 600;
         }
 
-        .durum-badge {
-            font-size: 11px;
-            padding: 6px 10px;
-            border-radius: 20px;
-        }
 
         .bos-kayit {
+
             padding: 60px 20px;
+
             text-align: center;
+
             color: #6c757d;
+        }
+
+
+        .excel-btn {
+
+            min-width: 155px;
+        }
+
+
+        .durum-form {
+
+            margin: 0;
+        }
+
+
+        .durum-select {
+
+            min-width: 110px;
         }
 
     </style>
@@ -148,7 +209,7 @@
                     class="btn btn-outline-secondary"
                 >
 
-                    <i class="bi bi-arrow-left"></i>
+                    <i class="bi bi-arrow-left me-1"></i>
 
                     Dashboard
 
@@ -176,7 +237,9 @@
             <div class="row g-3 align-items-end">
 
 
+                <!-- ====================================== -->
                 <!-- BAŞLANGIÇ TARİHİ -->
+                <!-- ====================================== -->
 
                 <div class="col-md">
 
@@ -190,13 +253,16 @@
                         type="date"
                         name="baslangic"
                         class="form-control"
-                        value="{{ baslangic }}"
+                        value="{{ baslangic or '' }}"
                     >
 
                 </div>
 
 
+
+                <!-- ====================================== -->
                 <!-- BİTİŞ TARİHİ -->
+                <!-- ====================================== -->
 
                 <div class="col-md">
 
@@ -210,13 +276,16 @@
                         type="date"
                         name="bitis"
                         class="form-control"
-                        value="{{ bitis }}"
+                        value="{{ bitis or '' }}"
                     >
 
                 </div>
 
 
+
+                <!-- ====================================== -->
                 <!-- ŞUBE -->
+                <!-- ====================================== -->
 
                 <div class="col-md">
 
@@ -242,7 +311,7 @@
 
                             <option
                                 value="{{ sube[0] }}"
-                                {% if secili_sube == sube[0] %}
+                                {% if secili_sube|string == sube[0]|string %}
                                     selected
                                 {% endif %}
                             >
@@ -258,7 +327,10 @@
                 </div>
 
 
+
+                <!-- ====================================== -->
                 <!-- FİRMA -->
+                <!-- ====================================== -->
 
                 <div class="col-md">
 
@@ -308,11 +380,17 @@
                 </div>
 
 
+
+                <!-- ====================================== -->
                 <!-- BUTONLAR -->
+                <!-- ====================================== -->
 
                 <div class="col-md-auto">
 
                     <div class="d-flex gap-2">
+
+
+                        <!-- FİLTRELE -->
 
                         <button
                             type="submit"
@@ -325,6 +403,30 @@
 
                         </button>
 
+
+
+                        <!-- ====================================== -->
+                        <!-- EXCEL'E AKTAR -->
+                        <!-- ====================================== -->
+
+                        <button
+                            type="submit"
+                            formaction="/sevkiyat-excel"
+                            formmethod="GET"
+                            class="btn btn-success px-4 excel-btn"
+                        >
+
+                            <i class="bi bi-file-earmark-excel me-1"></i>
+
+                            Excel'e Aktar
+
+                        </button>
+
+
+
+                        <!-- ====================================== -->
+                        <!-- FİLTRELERİ TEMİZLE -->
+                        <!-- ====================================== -->
 
                         <a
                             href="/sevkiyat"
@@ -356,7 +458,9 @@
     <div class="table-card">
 
 
-        <!-- BAŞLIK -->
+        <!-- ====================================== -->
+        <!-- TABLO BAŞLIĞI -->
+        <!-- ====================================== -->
 
         <div class="table-card-header">
 
@@ -387,6 +491,10 @@
 
 
 
+        <!-- ====================================== -->
+        <!-- KAYITLAR VARSA -->
+        <!-- ====================================== -->
+
         {% if sevkiyatlar %}
 
 
@@ -395,6 +503,10 @@
 
             <table class="table table-hover table-bordered mb-0">
 
+
+                <!-- ====================================== -->
+                <!-- TABLO BAŞLIKLARI -->
+                <!-- ====================================== -->
 
                 <thead class="table-light">
 
@@ -435,6 +547,7 @@
                 </thead>
 
 
+
                 <tbody>
 
 
@@ -444,7 +557,9 @@
                     <tr>
 
 
+                        <!-- ====================================== -->
                         <!-- SIRA -->
+                        <!-- ====================================== -->
 
                         <td>
 
@@ -453,7 +568,10 @@
                         </td>
 
 
+
+                        <!-- ====================================== -->
                         <!-- HAFTA -->
+                        <!-- ====================================== -->
 
                         <td>
 
@@ -466,7 +584,10 @@
                         </td>
 
 
+
+                        <!-- ====================================== -->
                         <!-- TARİH -->
+                        <!-- ====================================== -->
 
                         <td>
 
@@ -475,16 +596,22 @@
                         </td>
 
 
+
+                        <!-- ====================================== -->
                         <!-- ŞUBE -->
+                        <!-- ====================================== -->
 
                         <td class="sube-adi">
 
-                            {{ sevkiyat[5] }}
+                            {{ sevkiyat[5] or "-" }}
 
                         </td>
 
 
+
+                        <!-- ====================================== -->
                         <!-- FİRMA -->
+                        <!-- ====================================== -->
 
                         <td>
 
@@ -493,55 +620,74 @@
                         </td>
 
 
+
+                        <!-- ====================================== -->
                         <!-- DONUK -->
-<td class="donuk">
+                        <!-- ====================================== -->
 
-    {{ "%.0f"|format(sevkiyat[6] or 0) }} 
+                        <td class="donuk">
 
-</td>
+                            {{ "%.0f"|format(sevkiyat[6] or 0) }}
 
-
-<!-- SOĞUK -->
-<td class="soguk">
-
-    {{ "%.0f"|format(sevkiyat[7] or 0) }} 
-
-</td>
+                        </td>
 
 
+
+                        <!-- ====================================== -->
+                        <!-- SOĞUK -->
+                        <!-- ====================================== -->
+
+                        <td class="soguk">
+
+                            {{ "%.0f"|format(sevkiyat[7] or 0) }}
+
+                        </td>
+
+
+
+                        <!-- ====================================== -->
                         <!-- DONUK DOLULUK -->
-<td class="doluluk">
+                        <!-- ====================================== -->
 
-    {% if sevkiyat[8] is not none %}
+                        <td class="doluluk">
 
-        {{ "%.2f"|format(sevkiyat[8]) }}%
+                            {% if sevkiyat[8] is not none %}
 
-    {% else %}
+                                {{ "%.2f"|format(sevkiyat[8]) }}%
 
-        -
+                            {% else %}
 
-    {% endif %}
+                                -
 
-</td>
+                            {% endif %}
 
-
-<!-- SOĞUK DOLULUK -->
-<td class="doluluk">
-
-    {% if sevkiyat[9] is not none %}
-
-        {{ "%.2f"|format(sevkiyat[9]) }}%
-
-    {% else %}
-
-        -
-
-    {% endif %}
-
-</td>
+                        </td>
 
 
+
+                        <!-- ====================================== -->
+                        <!-- SOĞUK DOLULUK -->
+                        <!-- ====================================== -->
+
+                        <td class="doluluk">
+
+                            {% if sevkiyat[9] is not none %}
+
+                                {{ "%.2f"|format(sevkiyat[9]) }}%
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- ====================================== -->
                         <!-- ATB ÇIKIŞ -->
+                        <!-- ====================================== -->
 
                         <td>
 
@@ -550,7 +696,10 @@
                         </td>
 
 
+
+                        <!-- ====================================== -->
                         <!-- ŞUBE TESLİM -->
+                        <!-- ====================================== -->
 
                         <td>
 
@@ -559,7 +708,10 @@
                         </td>
 
 
+
+                        <!-- ====================================== -->
                         <!-- PALET FİYATI -->
+                        <!-- ====================================== -->
 
                         <td class="maliyet">
 
@@ -568,7 +720,10 @@
                         </td>
 
 
+
+                        <!-- ====================================== -->
                         <!-- TOPLAM MALİYET -->
+                        <!-- ====================================== -->
 
                         <td class="maliyet">
 
@@ -577,7 +732,10 @@
                         </td>
 
 
-                        <!-- KAYIP -->
+
+                        <!-- ====================================== -->
+                        <!-- KAYIP MALİYETİ -->
+                        <!-- ====================================== -->
 
                         <td>
 
@@ -602,43 +760,51 @@
                         </td>
 
 
+
+                        <!-- ====================================== -->
                         <!-- DURUM -->
+                        <!-- ====================================== -->
 
                         <td>
 
-                            {% if sevkiyat[15] == "TAMAMLANDI" %}
+                            <form
+                                method="POST"
+                                action="/sevkiyat-durum/{{ sevkiyat[0] }}"
+                                class="durum-form"
+                            >
 
-                                <span class="badge bg-success durum-badge">
+                                <select
+                                    name="durum"
+                                    class="form-select form-select-sm durum-select"
+                                    onchange="this.form.submit()"
+                                >
 
-                                    TAMAMLANDI
+                                    <option
+                                        value="AKTIF"
+                                        {% if sevkiyat[15] == "AKTIF" %}
+                                            selected
+                                        {% endif %}
+                                    >
 
-                                </span>
+                                        AKTİF
 
-                            {% elif sevkiyat[15] == "IPTAL" %}
+                                    </option>
 
-                                <span class="badge bg-danger durum-badge">
 
-                                    İPTAL
+                                    <option
+                                        value="PASIF"
+                                        {% if sevkiyat[15] == "PASIF" %}
+                                            selected
+                                        {% endif %}
+                                    >
 
-                                </span>
+                                        PASİF
 
-                            {% elif sevkiyat[15] == "YOLDA" %}
+                                    </option>
 
-                                <span class="badge bg-warning text-dark durum-badge">
+                                </select>
 
-                                    YOLDA
-
-                                </span>
-
-                            {% else %}
-
-                                <span class="badge bg-primary durum-badge">
-
-                                    {{ sevkiyat[15] or "PLANLANDI" }}
-
-                                </span>
-
-                            {% endif %}
+                            </form>
 
                         </td>
 
@@ -658,10 +824,12 @@
         </div>
 
 
+        <!-- ====================================== -->
+        <!-- KAYIT YOKSA -->
+        <!-- ====================================== -->
+
         {% else %}
 
-
-        <!-- KAYIT YOK -->
 
         <div class="bos-kayit">
 
@@ -670,11 +838,13 @@
                 style="font-size: 48px;"
             ></i>
 
+
             <h5 class="mt-3">
 
                 Sevkiyat kaydı bulunamadı
 
             </h5>
+
 
             <p class="mb-0">
 
@@ -693,6 +863,11 @@
 
 </div>
 
+
+
+<!-- ====================================== -->
+<!-- BOOTSTRAP JS -->
+<!-- ====================================== -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

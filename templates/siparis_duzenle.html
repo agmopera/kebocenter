@@ -5,145 +5,628 @@
 
     <meta charset="UTF-8">
 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Sipariş Düzenle</title>
 
     <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet">
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+    <style>
+
+        body {
+            background: #f3f5f7;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+        }
+
+        .baslik {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .progress {
+            height: 28px;
+            border-radius: 8px;
+        }
+
+        .progress-bar {
+            font-weight: 600;
+        }
+
+        .bilgi-kart {
+            min-height: 120px;
+        }
+
+        .urun-tipi {
+            font-weight: 600;
+        }
+
+    </style>
 
 </head>
 
-<body class="bg-light">
 
-<div class="container mt-5">
+<body>
 
-    <h2>Sipariş Düzenle</h2>
 
-    <hr>
+<div class="container mt-4 mb-5">
 
-    <div class="card p-3 mb-4">
 
-        <h5>Sipariş Bilgileri</h5>
+    <!-- ====================================== -->
+    <!-- ÜST BAŞLIK -->
+    <!-- ====================================== -->
 
-        <p>
-            <strong>Sipariş No :</strong>
-            {{ siparis[1] }}
-        </p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-        <p>
-            <strong>Şube :</strong>
-            {{ siparis[2] }}
-        </p>
+        <div>
 
-        <p>
-            <strong>Tarih :</strong>
-            {{ siparis[3] }}
-        </p>
+            <div class="baslik">
 
-        <p>
-            <strong>Durum :</strong>
-            {{ siparis[4] }}
-        </p>
+                <i class="bi bi-pencil-square me-2"></i>
+
+                Sipariş Düzenle
+
+            </div>
+
+            <div class="text-muted mt-1">
+
+                Sipariş bilgilerini, miktarları ve palet doluluklarını düzenleyebilirsiniz.
+
+            </div>
+
+        </div>
+
+
+        <a
+            href="/dashboard"
+            class="btn btn-outline-secondary"
+        >
+
+            <i class="bi bi-speedometer2 me-1"></i>
+
+            Dashboard
+
+        </a>
 
     </div>
 
 
-    <form method="POST">
+    <!-- ====================================== -->
+    <!-- SİPARİŞ BİLGİLERİ -->
+    <!-- ====================================== -->
 
-        <div class="card p-3">
+    <div class="card shadow-sm p-3 mb-4">
 
-            <h5>Ürünler</h5>
+        <h5 class="mb-3">
 
-            <table class="table table-bordered align-middle">
+            <i class="bi bi-info-circle me-2"></i>
 
-                <thead class="table-dark">
+            Sipariş Bilgileri
 
-                    <tr>
-
-                        <th>Ürün</th>
-
-                        <th width="180">Miktar</th>
-
-                        <th width="100">İşlem</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                {% for detay in detaylar %}
-
-                    <tr>
-
-                        <td>
-
-                            {{ detay[2] }}
-
-                        </td>
-
-                        <td>
-
-                            <input
-                                type="number"
-                                class="form-control"
-                                min="0"
-                                step="1"
-                                name="miktar_{{ detay[0] }}"
-                                value="{{ detay[3] }}">
-
-                        </td>
-
-                        <td class="text-center">
-
-                            <a
-                                href="/siparis-detay-sil/{{ detay[0] }}/{{ siparis[0] }}"
-                                class="btn btn-danger btn-sm"
-                                onclick="return confirm('Bu ürünü silmek istiyor musunuz?')">
-
-                                Sil
-
-                            </a>
-
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-                </tbody>
-
-            </table>
+        </h5>
 
 
-            <div class="alert alert-info">
+        <div class="row">
 
-                <strong>Toplam Koli :</strong>
+            <div class="col-md-3">
 
-                {{ toplam }}
+                <p class="mb-1">
+
+                    <strong>Sipariş No:</strong>
+
+                </p>
+
+                <p class="text-muted">
+
+                    {{ siparis[1] }}
+
+                </p>
 
             </div>
 
 
-            <hr>
+            <div class="col-md-3">
 
-            <h5>Yeni Ürün Ekle</h5>
+                <p class="mb-1">
 
-            <div class="row">
+                    <strong>Şube:</strong>
+
+                </p>
+
+                <p class="text-muted">
+
+                    {{ siparis[2] }}
+
+                </p>
+
+            </div>
+
+
+            <div class="col-md-3">
+
+                <p class="mb-1">
+
+                    <strong>Tarih:</strong>
+
+                </p>
+
+                <p class="text-muted">
+
+                    {{ siparis[3] }}
+
+                </p>
+
+            </div>
+
+
+            <div class="col-md-3">
+
+                <p class="mb-1">
+
+                    <strong>Durum:</strong>
+
+                </p>
+
+                <p>
+
+                    {% if siparis[4] == "ONAYLANDI" %}
+
+                        <span class="badge bg-success">
+
+                            {{ siparis[4] }}
+
+                        </span>
+
+                    {% elif siparis[4] == "BEKLIYOR" %}
+
+                        <span class="badge bg-warning text-dark">
+
+                            {{ siparis[4] }}
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="badge bg-secondary">
+
+                            {{ siparis[4] }}
+
+                        </span>
+
+                    {% endif %}
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================== -->
+    <!-- PALET DOLULUKLARI -->
+    <!-- ====================================== -->
+
+    <div class="row mb-4">
+
+
+        <!-- DONUK -->
+
+        <div class="col-md-6 mb-3">
+
+            <div class="card bilgi-kart">
+
+                <div class="card-body">
+
+                    <h5 class="mb-3">
+
+                        ❄️ Donuk Palet
+
+                    </h5>
+
+                    <div class="progress">
+
+                        <div
+                            id="donukBar"
+                            class="progress-bar bg-primary"
+                            style="width:0%;"
+                        >
+
+                            0%
+
+                        </div>
+
+                    </div>
+
+                    <div class="mt-2 text-muted small">
+
+                        Donuk toplam palet:
+
+                        <strong id="donukPalet">
+
+                            0.00
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SOĞUK -->
+
+        <div class="col-md-6 mb-3">
+
+            <div class="card bilgi-kart">
+
+                <div class="card-body">
+
+                    <h5 class="mb-3">
+
+                        🧊 Soğuk Palet
+
+                    </h5>
+
+                    <div class="progress">
+
+                        <div
+                            id="sogukBar"
+                            class="progress-bar bg-success"
+                            style="width:0%;"
+                        >
+
+                            0%
+
+                        </div>
+
+                    </div>
+
+                    <div class="mt-2 text-muted small">
+
+                        Soğuk toplam palet:
+
+                        <strong id="sogukPalet">
+
+                            0.00
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================== -->
+    <!-- SİPARİŞ ÜRÜNLERİ -->
+    <!-- ====================================== -->
+
+    <form method="POST" id="duzenleForm">
+
+        <div class="card shadow-sm p-4">
+
+
+            <h5 class="mb-3">
+
+                <i class="bi bi-box-seam me-2"></i>
+
+                Siparişteki Ürünler
+
+            </h5>
+
+
+            <div class="table-responsive">
+
+                <table
+                    class="table table-bordered table-hover align-middle"
+                >
+
+                    <thead class="table-dark">
+
+                        <tr>
+
+                            <th width="5%">
+                                #
+                            </th>
+
+                            <th>
+                                Ürün
+                            </th>
+
+                            <th width="12%">
+                                Tip
+                            </th>
+
+                            <th width="12%">
+                                Palet Kapasitesi
+                            </th>
+
+                            <th width="15%">
+                                Miktar
+                            </th>
+
+                            <th width="12%">
+                                Palet
+                            </th>
+
+                            <th width="10%">
+                                İşlem
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="urunBody">
+
+
+                    {% for detay in detaylar %}
+
+                        <tr
+                            class="urun-satir"
+    data-tip="{{ detay[5] or '' }}"
+    data-palet="{{ detay[4] or 0 }}"
+                        >
+
+
+                            <!-- SIRA -->
+
+                            <td>
+
+                                {{ loop.index }}
+
+                            </td>
+
+
+                            <!-- ÜRÜN -->
+
+                            <td>
+
+                                <strong>
+
+                                    {{ detay[2] }}
+
+                                </strong>
+
+                            </td>
+
+
+                            <!-- TİP -->
+
+                            <td>
+
+                                {% if detay[5] == "Donuk" %}
+
+    <span class="badge bg-primary">
+        Donuk
+    </span>
+
+{% elif detay[5] == "Soğuk" %}
+
+    <span class="badge bg-success">
+        Soğuk
+    </span>
+
+{% else %}
+
+    <span class="badge bg-secondary">
+        {{ detay[5] or "-" }}
+    </span>
+
+{% endif %}
+
+
+                            </td>
+
+
+                            <!-- PALET KAPASİTESİ -->
+
+                            <td>
+
+                                {{ detay[4] or 0 }}
+
+                            </td>
+
+
+                            <!-- MİKTAR -->
+
+                            <td>
+
+                                <input
+                                    type="number"
+                                    class="form-control miktar-input"
+                                    min="0"
+                                    step="1"
+                                    name="miktar_{{ detay[0] }}"
+                                    value="{{ detay[3] }}"
+                                >
+
+                            </td>
+
+
+                            <!-- PALET -->
+
+                            <td>
+
+                                <strong class="urun-palet">
+
+                                    0.00
+
+                                </strong>
+
+                            </td>
+
+
+                            <!-- SİL -->
+
+                            <td class="text-center">
+
+                                <a
+                                    href="/siparis-detay-sil/{{ detay[0] }}/{{ siparis[0] }}"
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Bu ürünü silmek istiyor musunuz?')"
+                                >
+
+                                    <i class="bi bi-trash me-1"></i>
+
+                                    Sil
+
+                                </a>
+
+                            </td>
+
+
+                        </tr>
+
+                    {% endfor %}
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- ====================================== -->
+            <!-- TOPLAM KOLİ -->
+            <!-- ====================================== -->
+
+            <div class="alert alert-info mt-3">
+
+                <i class="bi bi-boxes me-2"></i>
+
+                <strong>Toplam Koli:</strong>
+
+                <span id="toplamKoli">
+
+                    {{ toplam }}
+
+                </span>
+
+            </div>
+
+
+            <!-- ====================================== -->
+            <!-- PALET ÖZETİ -->
+            <!-- ====================================== -->
+
+            <div class="row mt-3">
+
+
+                <div class="col-md-6">
+
+                    <div class="alert alert-primary">
+
+                        <strong>
+
+                            ❄️ Donuk:
+
+                        </strong>
+
+                        <span id="donukOzet">
+
+                            0.00 Palet
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <div class="alert alert-success">
+
+                        <strong>
+
+                            🧊 Soğuk:
+
+                        </strong>
+
+                        <span id="sogukOzet">
+
+                            0.00 Palet
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <hr class="my-4">
+
+
+            <!-- ====================================== -->
+            <!-- YENİ ÜRÜN EKLE -->
+            <!-- ====================================== -->
+
+            <h5 class="mb-3">
+
+                <i class="bi bi-plus-circle me-2"></i>
+
+                Yeni Ürün Ekle
+
+            </h5>
+
+
+            <div class="row g-3">
+
+
+                <!-- ÜRÜN -->
 
                 <div class="col-md-7">
 
+                    <label class="form-label fw-semibold">
+
+                        Ürün
+
+                    </label>
+
                     <select
                         name="yeni_urun"
-                        class="form-select">
+                        class="form-select"
+                    >
 
                         {% for urun in urunler %}
 
-                        <option value="{{ urun[0] }}">
+                            <option value="{{ urun[0] }}">
 
-                            {{ urun[2] }}
+                                {{ urun[2] }}
 
-                        </option>
+                            </option>
 
                         {% endfor %}
 
@@ -151,46 +634,293 @@
 
                 </div>
 
+
+                <!-- MİKTAR -->
+
                 <div class="col-md-3">
+
+                    <label class="form-label fw-semibold">
+
+                        Miktar
+
+                    </label>
 
                     <input
                         type="number"
                         name="yeni_miktar"
                         class="form-control"
                         value="1"
-                        min="1">
+                        min="1"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ====================================== -->
+            <!-- ALT BUTONLAR -->
+            <!-- ====================================== -->
+
+            <hr class="my-4">
+
+
+            <div class="d-flex justify-content-between align-items-center">
+
+
+                <!-- SOL -->
+
+                <div>
+
+                    <a
+                        href="/dashboard"
+                        class="btn btn-outline-secondary"
+                    >
+
+                        <i class="bi bi-speedometer2 me-1"></i>
+
+                        Dashboard
+
+                    </a>
+
+                </div>
+
+
+                <!-- SAĞ -->
+
+                <div class="d-flex gap-2">
+
+                    <a
+                        href="/siparis-detay/{{ siparis[0] }}"
+                        class="btn btn-secondary"
+                    >
+
+                        <i class="bi bi-arrow-left me-1"></i>
+
+                        Vazgeç
+
+                    </a>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-success px-4"
+                    >
+
+                        <i class="bi bi-check-circle me-1"></i>
+
+                        Kaydet
+
+                    </button>
 
                 </div>
 
             </div>
 
-            <br>
-
-            <div class="d-flex gap-2">
-
-                <button
-                    type="submit"
-                    class="btn btn-success">
-
-                    Kaydet
-
-                </button>
-
-                <a
-                    href="/siparis-detay/{{ siparis[0] }}"
-                    class="btn btn-secondary">
-
-                    Vazgeç
-
-                </a>
-
-            </div>
 
         </div>
 
     </form>
 
+
 </div>
 
+
+
+<!-- ====================================== -->
+<!-- JAVASCRIPT -->
+<!-- ====================================== -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    hesaplaPaletler();
+
+});
+
+
+
+/* ======================================
+   TÜM MİKTAR INPUTLARINI DİNLE
+====================================== */
+
+document.querySelectorAll(".miktar-input").forEach(function (input) {
+
+    input.addEventListener("input", function () {
+
+        hesaplaPaletler();
+
+    });
+
+});
+
+
+
+/* ======================================
+   PALET HESAPLAMA
+====================================== */
+
+function hesaplaPaletler() {
+
+    let donukPalet = 0;
+
+    let sogukPalet = 0;
+
+    let toplamKoli = 0;
+
+
+    document.querySelectorAll(".urun-satir").forEach(function (satir) {
+
+
+        let miktarInput =
+            satir.querySelector(".miktar-input");
+
+
+        let miktar =
+            Number(miktarInput.value) || 0;
+
+
+        let paletKapasitesi =
+            Number(satir.dataset.palet) || 0;
+
+
+        let tip =
+            satir.dataset.tip;
+
+
+        /* TOPLAM KOLİ */
+
+        toplamKoli += miktar;
+
+
+        /* PALET HESABI */
+
+        let palet = 0;
+
+
+        if (paletKapasitesi > 0) {
+
+            palet =
+                miktar / paletKapasitesi;
+
+        }
+
+
+        /* SATIR PALET */
+
+        let paletAlani =
+            satir.querySelector(".urun-palet");
+
+
+        if (paletAlani) {
+
+            paletAlani.innerHTML =
+                palet.toFixed(2);
+
+        }
+
+
+        /* DONUK */
+
+        if (tip === "Donuk") {
+
+            donukPalet += palet;
+
+        }
+
+
+        /* SOĞUK */
+
+        if (tip === "Soğuk") {
+
+            sogukPalet += palet;
+
+        }
+
+    });
+
+
+    /* ======================================
+       TOPLAM KOLİ
+    ====================================== */
+
+    document.getElementById("toplamKoli").innerHTML =
+        toplamKoli.toLocaleString("tr-TR");
+
+
+    /* ======================================
+       DONUK
+    ====================================== */
+
+    document.getElementById("donukPalet").innerHTML =
+        donukPalet.toFixed(2);
+
+
+    document.getElementById("donukOzet").innerHTML =
+        donukPalet.toFixed(2) + " Palet";
+
+
+    /* ======================================
+       SOĞUK
+    ====================================== */
+
+    document.getElementById("sogukPalet").innerHTML =
+        sogukPalet.toFixed(2);
+
+
+    document.getElementById("sogukOzet").innerHTML =
+        sogukPalet.toFixed(2) + " Palet";
+
+
+    /* ======================================
+       PROGRESS BAR
+    ====================================== */
+
+    let donukYuzde =
+        Math.min(donukPalet * 100, 100);
+
+
+    let sogukYuzde =
+        Math.min(sogukPalet * 100, 100);
+
+
+    let donukBar =
+        document.getElementById("donukBar");
+
+
+    let sogukBar =
+        document.getElementById("sogukBar");
+
+
+    donukBar.style.width =
+        donukYuzde + "%";
+
+
+    donukBar.innerHTML =
+        donukPalet.toFixed(2) + " Palet";
+
+
+    sogukBar.style.width =
+        sogukYuzde + "%";
+
+
+    sogukBar.innerHTML =
+        sogukPalet.toFixed(2) + " Palet";
+
+}
+
+
+
+</script>
+
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+></script>
+
+
 </body>
+
 </html>

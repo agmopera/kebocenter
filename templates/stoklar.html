@@ -71,6 +71,11 @@ body{
     font-weight:600;
 }
 
+.stokToplam{
+    font-size:18px;
+    font-weight:bold;
+}
+
 </style>
 
 </head>
@@ -131,7 +136,10 @@ body{
 
                 </h6>
 
-                <h2 class="mb-0">
+                <h2
+                    class="mb-0"
+                    id="toplamUrunSayisi"
+                >
 
                     {{ merkez_stok|length }}
 
@@ -190,7 +198,10 @@ body{
 
                 </h6>
 
-                <h2 class="mb-0">
+                <h2
+                    class="mb-0"
+                    id="subeStokKayitSayisi"
+                >
 
                     {{ sube_stoklari|length }}
 
@@ -349,13 +360,31 @@ body{
 
     <div class="card-header bg-dark text-white">
 
-        <h5 class="mb-0">
+        <div class="d-flex justify-content-between align-items-center">
 
-            <i class="bi bi-box-seam"></i>
+            <h5 class="mb-0">
 
-            Merkez Stok Listesi
+                <i class="bi bi-box-seam"></i>
 
-        </h5>
+                Merkez Stok Listesi
+
+            </h5>
+
+
+            <!-- MERKEZ EXCEL BUTONU -->
+
+            <a
+                href="/stoklar/merkez-excel"
+                class="btn btn-success btn-sm"
+            >
+
+                <i class="bi bi-file-earmark-excel"></i>
+
+                Excel'e Aktar
+
+            </a>
+
+        </div>
 
     </div>
 
@@ -594,11 +623,33 @@ body{
             </h5>
 
 
-            <span class="badge bg-light text-primary">
+            <div class="d-flex align-items-center gap-2">
 
-                {{ sube_stoklari|length }} Kayıt
+                <span class="badge bg-light text-primary">
 
-            </span>
+                    <span id="subeKayitBadge">
+                        {{ sube_stoklari|length }}
+                    </span>
+
+                    Kayıt
+
+                </span>
+
+
+                <!-- ŞUBE EXCEL BUTONU -->
+
+                <a
+                    href="/stoklar/sube-excel{% if secili_sube %}?sube_id={{ secili_sube }}{% endif %}"
+                    class="btn btn-success btn-sm"
+                >
+
+                    <i class="bi bi-file-earmark-excel"></i>
+
+                    Excel'e Aktar
+
+                </a>
+
+            </div>
 
 
         </div>
@@ -609,58 +660,113 @@ body{
 
     <div class="card-body">
 
+
+        <!-- ====================================== -->
+        <!-- ŞUBE FİLTRESİ -->
+        <!-- ====================================== -->
+
         <div class="row mb-4">
 
-    <div class="col-md-5">
+            <div class="col-md-7">
 
-        <form method="GET" action="/stoklar">
-
-            <label class="form-label fw-bold">
-                Şube Seç
-            </label>
-
-            <div class="input-group">
-
-                <select
-                    name="sube_id"
-                    class="form-select"
-                    onchange="this.form.submit()"
+                <form
+                    method="GET"
+                    action="/stoklar"
                 >
 
-                    <option value="">
-                        Tüm Şubeler
-                    </option>
+                    <label class="form-label fw-bold">
 
-                    {% for sube in filtre_subeler %}
+                        Şube Seç
 
-                    <option
-                        value="{{ sube[0] }}"
-                        {% if secili_sube == sube[0] %}
-                            selected
-                        {% endif %}
-                    >
-                        {{ sube[1] }}
-                    </option>
+                    </label>
 
-                    {% endfor %}
 
-                </select>
+                    <div class="input-group">
 
-                <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    onclick="window.location.href='/stoklar'"
-                >
-                    Temizle
-                </button>
+
+                        <select
+                            name="sube_id"
+                            class="form-select"
+                            onchange="this.form.submit()"
+                        >
+
+
+                            <option value="">
+
+                                Tüm Şubeler
+
+                            </option>
+
+
+                            {% for sube in filtre_subeler %}
+
+
+                            <option
+                                value="{{ sube[0] }}"
+                                {% if secili_sube == sube[0] %}
+                                    selected
+                                {% endif %}
+                            >
+
+                                {{ sube[1] }}
+
+                            </option>
+
+
+                            {% endfor %}
+
+
+                        </select>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            onclick="window.location.href='/stoklar'"
+                        >
+
+                            Temizle
+
+                        </button>
+
+
+                    </div>
+
+                </form>
 
             </div>
 
-        </form>
 
-    </div>
+            <!-- SEÇİLİ ŞUBE BİLGİSİ -->
 
-</div>
+            <div class="col-md-5 d-flex align-items-end">
+
+                {% if secili_sube %}
+
+                    <div class="alert alert-success mb-0 w-100 py-2">
+
+                        <i class="bi bi-check-circle"></i>
+
+                        Seçili şubenin stokları gösteriliyor.
+
+                    </div>
+
+                {% else %}
+
+                    <div class="alert alert-info mb-0 w-100 py-2">
+
+                        <i class="bi bi-shop"></i>
+
+                        Tüm şubelerin stokları gösteriliyor.
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
 
 
         {% if sube_stoklari %}
@@ -669,7 +775,17 @@ body{
         <div class="table-responsive">
 
 
-            <table class="table table-hover table-bordered mb-0">
+            <!--
+                data-stok-tablosu:
+                JavaScript aşağıdaki tabloyu okuyup
+                aynı ŞUBE + ÜRÜN kayıtlarını otomatik
+                olarak birleştirecek.
+            -->
+
+            <table
+                id="subeStokTablosu"
+                class="table table-hover table-bordered mb-0"
+            >
 
 
                 <thead class="table-light">
@@ -701,18 +817,24 @@ body{
                 </thead>
 
 
-                <tbody>
+                <tbody id="subeStokBody">
 
 
                     {% for stok in sube_stoklari %}
 
 
-                    <tr>
+                    <tr
+                        class="stok-satiri"
+                        data-sube="{{ stok[1] }}"
+                        data-urun="{{ stok[3] }}"
+                        data-birim="{{ stok[4] }}"
+                        data-stok="{{ stok[5] }}"
+                    >
 
 
                         <!-- SIRA -->
 
-                        <td>
+                        <td class="sira">
 
                             {{ loop.index }}
 
@@ -722,7 +844,7 @@ body{
 
                         <!-- ŞUBE -->
 
-                        <td>
+                        <td class="sube-adi">
 
                             <strong>
 
@@ -736,7 +858,7 @@ body{
 
                         <!-- ÜRÜN -->
 
-                        <td>
+                        <td class="urun-adi">
 
                             {{ stok[3] }}
 
@@ -746,7 +868,7 @@ body{
 
                         <!-- BİRİM -->
 
-                        <td>
+                        <td class="birim">
 
                             <span class="badge badge-birim">
 
@@ -760,7 +882,7 @@ body{
 
                         <!-- STOK -->
 
-                        <td>
+                        <td class="stok-hucre">
 
 
                             {% if stok[5] < 0 %}
@@ -892,267 +1014,282 @@ body{
 
     <div class="card-body">
 
+
         <!-- ====================================== -->
-<!-- STOK HAREKETLERİ FİLTRE -->
-<!-- ====================================== -->
+        <!-- STOK HAREKETLERİ FİLTRE -->
+        <!-- ====================================== -->
 
-<div class="card border mb-4">
+        <div class="card border mb-4">
 
-    <div class="card-body">
+            <div class="card-body">
 
-        <form
-            method="GET"
-            action="/stoklar"
-        >
+                <form
+                    method="GET"
+                    action="/stoklar"
+                >
 
-            <div class="row g-3">
-
-
-                <!-- BAŞLANGIÇ TARİHİ -->
-
-                <div class="col-md-2">
-
-                    <label class="form-label fw-bold">
-
-                        Başlangıç
-
-                    </label>
-
-                    <input
-                        type="date"
-                        name="baslangic"
-                        class="form-control"
-                        value="{{ baslangic }}"
-                    >
-
-                </div>
+                    <div class="row g-3">
 
 
-                <!-- BİTİŞ TARİHİ -->
+                        <!-- BAŞLANGIÇ TARİHİ -->
 
-                <div class="col-md-2">
+                        <div class="col-md-2">
 
-                    <label class="form-label fw-bold">
+                            <label class="form-label fw-bold">
 
-                        Bitiş
+                                Başlangıç
 
-                    </label>
+                            </label>
 
-                    <input
-                        type="date"
-                        name="bitis"
-                        class="form-control"
-                        value="{{ bitis }}"
-                    >
-
-                </div>
-
-
-                <!-- ŞUBE -->
-
-                <div class="col-md-2">
-
-                    <label class="form-label fw-bold">
-
-                        Şube
-
-                    </label>
-
-                    <select
-                        name="sube_id"
-                        class="form-select"
-                    >
-
-                        <option value="">
-
-                            Tüm Şubeler
-
-                        </option>
-
-
-                        {% for sube in filtre_subeler %}
-
-                            <option
-                                value="{{ sube[0] }}"
-                                {% if secili_sube == sube[0] %}
-                                    selected
-                                {% endif %}
+                            <input
+                                type="date"
+                                name="baslangic"
+                                class="form-control"
+                                value="{{ baslangic }}"
                             >
 
-                                {{ sube[1] }}
-
-                            </option>
-
-                        {% endfor %}
-
-                    </select>
-
-                </div>
+                        </div>
 
 
-                <!-- ÜRÜN -->
 
-                <div class="col-md-3">
+                        <!-- BİTİŞ TARİHİ -->
 
-                    <label class="form-label fw-bold">
+                        <div class="col-md-2">
 
-                        Ürün
+                            <label class="form-label fw-bold">
 
-                    </label>
+                                Bitiş
 
-                    <select
-                        name="urun_id"
-                        class="form-select"
-                    >
+                            </label>
 
-                        <option value="">
-
-                            Tüm Ürünler
-
-                        </option>
-
-
-                        {% for urun in filtre_urunler %}
-
-                            <option
-                                value="{{ urun[0] }}"
-                                {% if secili_urun == urun[0] %}
-                                    selected
-                                {% endif %}
+                            <input
+                                type="date"
+                                name="bitis"
+                                class="form-control"
+                                value="{{ bitis }}"
                             >
 
-                                {{ urun[1] }}
-
-                            </option>
-
-                        {% endfor %}
-
-                    </select>
-
-                </div>
+                        </div>
 
 
-                <!-- HAREKET TİPİ -->
 
-                <div class="col-md-3">
+                        <!-- ŞUBE -->
 
-                    <label class="form-label fw-bold">
+                        <div class="col-md-2">
 
-                        Hareket Türü
+                            <label class="form-label fw-bold">
 
-                    </label>
+                                Şube
 
-                    <select
-                        name="hareket_tipi"
-                        class="form-select"
-                    >
+                            </label>
 
-                        <option value="">
+                            <select
+                                name="sube_id"
+                                class="form-select"
+                            >
 
-                            Tüm Hareketler
+                                <option value="">
 
-                        </option>
+                                    Tüm Şubeler
 
-                        <option
-                            value="Giriş"
-                            {% if secili_hareket == "Giriş" %}
-                                selected
-                            {% endif %}
-                        >
-
-                            Giriş
-
-                        </option>
-
-                        <option
-                            value="Sipariş Sevki"
-                            {% if secili_hareket == "Sipariş Sevki" %}
-                                selected
-                            {% endif %}
-                        >
-
-                            Sipariş Sevki
-
-                        </option>
-
-                        <option
-                            value="Satış"
-                            {% if secili_hareket == "Satış" %}
-                                selected
-                            {% endif %}
-                        >
-
-                            Satış
-
-                        </option>
-
-                    </select>
-
-                </div>
+                                </option>
 
 
-                <!-- ARAMA -->
+                                {% for sube in filtre_subeler %}
 
-                <div class="col-md-6">
+                                    <option
+                                        value="{{ sube[0] }}"
+                                        {% if secili_sube == sube[0] %}
+                                            selected
+                                        {% endif %}
+                                    >
 
-                    <label class="form-label fw-bold">
+                                        {{ sube[1] }}
 
-                        Genel Arama
+                                    </option>
 
-                    </label>
+                                {% endfor %}
 
-                    <input
-                        type="text"
-                        name="arama"
-                        class="form-control"
-                        placeholder="Ürün, kaynak, hedef veya açıklama..."
-                        value="{{ arama }}"
-                    >
+                            </select>
 
-                </div>
-
-
-                <!-- BUTONLAR -->
-
-                <div class="col-md-3 d-flex align-items-end">
-
-                    <button
-                        type="submit"
-                        class="btn btn-primary w-100"
-                    >
-
-                        <i class="bi bi-funnel"></i>
-
-                        Filtrele
-
-                    </button>
-
-                </div>
+                        </div>
 
 
-                <div class="col-md-3 d-flex align-items-end">
 
-                    <a
-                        href="/stoklar"
-                        class="btn btn-outline-secondary w-100"
-                    >
+                        <!-- ÜRÜN -->
 
-                        <i class="bi bi-x-circle"></i>
+                        <div class="col-md-3">
 
-                        Filtreleri Temizle
+                            <label class="form-label fw-bold">
 
-                    </a>
+                                Ürün
 
-                </div>
+                            </label>
 
+                            <select
+                                name="urun_id"
+                                class="form-select"
+                            >
+
+                                <option value="">
+
+                                    Tüm Ürünler
+
+                                </option>
+
+
+                                {% for urun in filtre_urunler %}
+
+                                    <option
+                                        value="{{ urun[0] }}"
+                                        {% if secili_urun == urun[0] %}
+                                            selected
+                                        {% endif %}
+                                    >
+
+                                        {{ urun[1] }}
+
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+
+                        <!-- HAREKET TİPİ -->
+
+                        <div class="col-md-3">
+
+                            <label class="form-label fw-bold">
+
+                                Hareket Türü
+
+                            </label>
+
+                            <select
+                                name="hareket_tipi"
+                                class="form-select"
+                            >
+
+                                <option value="">
+
+                                    Tüm Hareketler
+
+                                </option>
+
+
+                                <option
+                                    value="Giriş"
+                                    {% if secili_hareket == "Giriş" %}
+                                        selected
+                                    {% endif %}
+                                >
+
+                                    Giriş
+
+                                </option>
+
+
+                                <option
+                                    value="Sipariş Sevki"
+                                    {% if secili_hareket == "Sipariş Sevki" %}
+                                        selected
+                                    {% endif %}
+                                >
+
+                                    Sipariş Sevki
+
+                                </option>
+
+
+                                <option
+                                    value="Satış"
+                                    {% if secili_hareket == "Satış" %}
+                                        selected
+                                    {% endif %}
+                                >
+
+                                    Satış
+
+                                </option>
+
+
+                            </select>
+
+                        </div>
+
+
+
+                        <!-- ARAMA -->
+
+                        <div class="col-md-6">
+
+                            <label class="form-label fw-bold">
+
+                                Genel Arama
+
+                            </label>
+
+                            <input
+                                type="text"
+                                name="arama"
+                                class="form-control"
+                                placeholder="Ürün, kaynak, hedef veya açıklama..."
+                                value="{{ arama }}"
+                            >
+
+                        </div>
+
+
+
+                        <!-- BUTON -->
+
+                        <div class="col-md-3 d-flex align-items-end">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary w-100"
+                            >
+
+                                <i class="bi bi-funnel"></i>
+
+                                Filtrele
+
+                            </button>
+
+                        </div>
+
+
+
+                        <!-- TEMİZLE -->
+
+                        <div class="col-md-3 d-flex align-items-end">
+
+                            <a
+                                href="/stoklar"
+                                class="btn btn-outline-secondary w-100"
+                            >
+
+                                <i class="bi bi-x-circle"></i>
+
+                                Filtreleri Temizle
+
+                            </a>
+
+                        </div>
+
+
+                    </div>
+
+                </form>
 
             </div>
 
-        </form>
+        </div>
 
-    </div>
-
-</div>
 
 
         {% if stok_hareketleri %}
@@ -1208,7 +1345,6 @@ body{
                             Açıklama
                         </th>
 
-                        
                     </tr>
 
                 </thead>
@@ -1405,24 +1541,26 @@ body{
 
                             {% else %}
 
-
                                 -
 
                             {% endif %}
 
 
                         </td>
-<!-- AÇIKLAMA -->
 
-<td>
 
-    <small class="text-muted">
 
-        {{ hareket[9] or "-" }}
+                        <!-- AÇIKLAMA -->
 
-    </small>
+                        <td>
 
-</td>
+                            <small class="text-muted">
+
+                                {{ hareket[9] or "-" }}
+
+                            </small>
+
+                        </td>
 
 
                     </tr>
@@ -1506,28 +1644,360 @@ body{
 
 
 <!-- ====================================== -->
-<!-- NEGATİF STOK SAYACI -->
+<!-- ŞUBE STOKLARINI BİRLEŞTİR -->
 <!-- ====================================== -->
 
 <script>
 
-let negatif = 0;
+function subeStoklariniBirlestir(){
 
-document
-.querySelectorAll(".stokNegatif")
-.forEach(function(){
+    const tbody =
+        document.getElementById("subeStokBody");
 
-    negatif++;
+    if(!tbody){
+        return;
+    }
 
-});
 
-document
-.getElementById("negatifSayisi")
-.innerHTML = negatif;
+    const satirlar =
+        Array.from(
+            tbody.querySelectorAll(".stok-satiri")
+        );
+
+
+    if(satirlar.length === 0){
+        return;
+    }
+
+
+    /*
+        Aynı Şube + Ürün kayıtlarını
+        tek satırda topluyoruz.
+
+        Örneğin:
+
+        Bahçeli + Döner = 50
+        Bahçeli + Döner = 30
+        Bahçeli + Döner = 20
+
+        sonuç:
+
+        Bahçeli + Döner = 100
+    */
+
+    const gruplar = new Map();
+
+
+    satirlar.forEach(function(satir){
+
+        const sube =
+            satir.dataset.sube || "";
+
+        const urun =
+            satir.dataset.urun || "";
+
+        const birim =
+            satir.dataset.birim || "";
+
+        const stok =
+            Number(
+                satir.dataset.stok || 0
+            );
+
+
+        /*
+            Key içinde şube de var.
+
+            Böylece:
+
+            Bahçeli + Döner
+            Kadıköy + Döner
+
+            birbirine karışmaz.
+        */
+
+        const key =
+            sube.trim()
+            + "|||"
+            + urun.trim();
+
+
+        if(!gruplar.has(key)){
+
+            gruplar.set(
+                key,
+                {
+                    sube:sube,
+                    urun:urun,
+                    birim:birim,
+                    stok:stok
+                }
+            );
+
+        }
+        else{
+
+            const grup =
+                gruplar.get(key);
+
+            grup.stok += stok;
+
+        }
+
+    });
+
+
+    /*
+        Eski satırları temizle
+    */
+
+    tbody.innerHTML = "";
+
+
+    let index = 1;
+
+    let negatifSayisi = 0;
+
+
+    /*
+        Gruplanmış kayıtları tabloya yaz
+    */
+
+    gruplar.forEach(function(grup){
+
+        const tr =
+            document.createElement("tr");
+
+
+        /*
+            Sıra
+        */
+
+        const tdSira =
+            document.createElement("td");
+
+        tdSira.innerHTML =
+            index;
+
+        tr.appendChild(tdSira);
+
+
+        /*
+            Şube
+        */
+
+        const tdSube =
+            document.createElement("td");
+
+        tdSube.innerHTML =
+            "<strong>"
+            + escapeHtml(grup.sube)
+            + "</strong>";
+
+        tr.appendChild(tdSube);
+
+
+        /*
+            Ürün
+        */
+
+        const tdUrun =
+            document.createElement("td");
+
+        tdUrun.innerHTML =
+            escapeHtml(grup.urun);
+
+        tr.appendChild(tdUrun);
+
+
+        /*
+            Birim
+        */
+
+        const tdBirim =
+            document.createElement("td");
+
+        tdBirim.innerHTML =
+            '<span class="badge badge-birim">'
+            + escapeHtml(grup.birim)
+            + '</span>';
+
+        tr.appendChild(tdBirim);
+
+
+        /*
+            Stok
+        */
+
+        const tdStok =
+            document.createElement("td");
+
+
+        const stok =
+            grup.stok;
+
+
+        if(stok < 0){
+
+            negatifSayisi++;
+
+
+            tdStok.innerHTML =
+                '<span class="stokNegatif">'
+                + '<i class="bi bi-exclamation-triangle-fill"></i> '
+                + formatStok(stok)
+                + '</span>';
+
+        }
+        else if(stok === 0){
+
+            tdStok.innerHTML =
+                '<span class="stokSifir">'
+                + formatStok(stok)
+                + '</span>';
+
+        }
+        else{
+
+            tdStok.innerHTML =
+                '<span class="stokPozitif stokToplam">'
+                + formatStok(stok)
+                + '</span>';
+
+        }
+
+
+        tr.appendChild(tdStok);
+
+
+        tbody.appendChild(tr);
+
+
+        index++;
+
+    });
+
+
+    /*
+        Özet kartındaki kayıt sayısını
+        artık birleşmiş kayıt sayısına göre göster.
+    */
+
+    const kayitSayisi =
+        gruplar.size;
+
+
+    const kayitElement =
+        document.getElementById(
+            "subeStokKayitSayisi"
+        );
+
+
+    if(kayitElement){
+
+        kayitElement.innerHTML =
+            kayitSayisi;
+
+    }
+
+
+    const badgeElement =
+        document.getElementById(
+            "subeKayitBadge"
+        );
+
+
+    if(badgeElement){
+
+        badgeElement.innerHTML =
+            kayitSayisi;
+
+    }
+
+
+    /*
+        Negatif stok sayısını güncelle
+    */
+
+    const negatifElement =
+        document.getElementById(
+            "negatifSayisi"
+        );
+
+
+    if(negatifElement){
+
+        negatifElement.innerHTML =
+            negatifSayisi;
+
+    }
+
+}
+
+
+/*
+    Sayısal stok değerlerini
+    düzgün göstermeye yardımcı olur.
+*/
+
+function formatStok(deger){
+
+    if(Number.isInteger(deger)){
+
+        return deger.toLocaleString("tr-TR");
+
+    }
+
+
+    return deger.toLocaleString(
+        "tr-TR",
+        {
+            minimumFractionDigits:2,
+            maximumFractionDigits:2
+        }
+    );
+
+}
+
+
+/*
+    Ürün / şube isimlerinde HTML
+    karakterlerinin doğrudan çalışmasını
+    engeller.
+*/
+
+function escapeHtml(text){
+
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+/*
+    Sayfa açılır açılmaz çalıştır.
+*/
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        subeStoklariniBirlestir();
+
+    }
+);
 
 </script>
 
 
+
+<!-- ====================================== -->
+<!-- BOOTSTRAP -->
+<!-- ====================================== -->
 
 <script
 src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">

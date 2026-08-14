@@ -180,6 +180,29 @@
 
 </div>
 
+<div class="col-md-6">
+    <label class="form-label">Nakliye Firması</label>
+
+    <select name="firma" class="form-select" required>
+        <option value="">Firma Seçin</option>
+        <option value="ÖZNİL">ÖZNİL</option>
+        <option value="NARLOG">NARLOG</option>
+    </select>
+</div>
+
+<div class="col-md-6 mb-3">
+    <label class="form-label">Lojistik Bedeli / Palet (₺)</label>
+
+    <input
+        type="number"
+        step="0.01"
+        min="0"
+        name="lojistik_bedeli"
+        class="form-control"
+        value="0"
+        required>
+</div>
+
 <div class="col-md-6 mb-3">
 
     <label class="form-label">Sevkiyat Saati</label>

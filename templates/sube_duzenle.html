@@ -211,20 +211,63 @@
 
 <div class="col-md-6 mb-3">
 
+    <label class="form-label">Nakliye Firması</label>
+
+    <select
+        name="firma"
+        class="form-select"
+        required>
+
+        <option value="">Firma Seçin</option>
+
+        <option
+            value="ÖZNİL"
+            {% if sube[15] == "ÖZNİL" %}selected{% endif %}>
+            ÖZNİL
+        </option>
+
+        <option
+            value="NARLOG"
+            {% if sube[15] == "NARLOG" %}selected{% endif %}>
+            NARLOG
+        </option>
+
+    </select>
+
+</div>
+
+
+<div class="col-md-6 mb-3">
+
     <label class="form-label">Tahmini Teslim Süresi</label>
 
     <select
         name="teslim_suresi"
         class="form-select">
 
-        <option value="Aynı Gün" {% if sube[14]=="Aynı Gün" %}selected{% endif %}>Aynı Gün</option>
-        <option value="+1 Gün" {% if sube[14]=="+1 Gün" %}selected{% endif %}>+1 Gün</option>
-        <option value="+2 Gün" {% if sube[14]=="+2 Gün" %}selected{% endif %}>+2 Gün</option>
-        <option value="+3 Gün" {% if sube[14]=="+3 Gün" %}selected{% endif %}>+3 Gün</option>
+        <option value="Aynı Gün" {% if sube[14] == "Aynı Gün" %}selected{% endif %}>Aynı Gün</option>
+        <option value="+1 Gün" {% if sube[14] == "+1 Gün" %}selected{% endif %}>+1 Gün</option>
+        <option value="+2 Gün" {% if sube[14] == "+2 Gün" %}selected{% endif %}>+2 Gün</option>
+        <option value="+3 Gün" {% if sube[14] == "+3 Gün" %}selected{% endif %}>+3 Gün</option>
 
     </select>
 
 </div>
+<div class="col-md-6 mb-3">
+
+    <label class="form-label">Lojistik Bedeli / Palet (₺)</label>
+
+    <input
+        type="number"
+        step="0.01"
+        min="0"
+        name="lojistik_bedeli"
+        class="form-control"
+        value="{{ sube[16] or 0 }}"
+        required>
+
+</div>
+
 
                 </div>
 
