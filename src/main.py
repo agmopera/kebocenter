@@ -22,6 +22,7 @@ from flask import (
 )
 
 from database import (
+    connect_database,
     create_tables,
 
     # ======================================
@@ -559,6 +560,7 @@ def stok_giris():
         return sonuc
 
     try:
+
         urun_id = int(
             request.form.get("urun_id")
         )
@@ -592,14 +594,64 @@ def stok_giris():
     return redirect("/stoklar")
 
 
-# ==========================================================
-# YENİ ÜRÜN
-# ==========================================================
+# ======================================
+# ÜRÜN TEDARİK ŞEKLİ YARDIMCILARI
+# ======================================
 
-@app.route(
-    "/yeni-urun",
-    methods=["GET", "POST"]
-)
+def urun_tedarik_sekli_guncelle(urun_id, tedarik_sekli):
+    """Mevcut database.py fonksiyonlarını bozmadan tedarik şeklini kaydeder."""
+    conn = connect_database()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE urunler
+        SET tedarik_sekli=?
+        WHERE id=?
+    """, (tedarik_sekli, urun_id))
+    conn.commit()
+    conn.close()
+
+
+def urun_tedarik_sekli_getir(urun_id):
+    conn = connect_database()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT COALESCE(tedarik_sekli, 'Merkez')
+        FROM urunler
+        WHERE id=?
+    """, (urun_id,))
+    sonuc = cursor.fetchone()
+    conn.close()
+    return sonuc[0] if sonuc else 'Merkez'
+
+
+def get_tum_urunler_siparis():
+    """Yeni sipariş için mevcut ürün alanlarını korur ve tedarik şeklini sona ekler."""
+    conn = connect_database()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT
+            id,
+            urun_adi,
+            kategori,
+            birim,
+            palet_kapasitesi,
+            fiyat,
+            urun_tipi,
+            COALESCE(tedarik_sekli, 'Merkez')
+        FROM urunler
+        WHERE durum='Aktif'
+        ORDER BY urun_adi
+    """)
+    sonuc = cursor.fetchall()
+    conn.close()
+    return sonuc
+
+
+# ======================================
+# YENİ ÜRÜN EKLE
+# ======================================
+
+@app.route("/yeni-urun", methods=["GET", "POST"])
 def yeni_urun():
 
     sonuc = admin_kontrol()
@@ -609,26 +661,62 @@ def yeni_urun():
 
     if request.method == "POST":
 
+        urun_kodu = request.form.get("urun_kodu", "").strip()
+        urun_adi = request.form.get("urun_adi", "").strip()
+        kategori = request.form.get("kategori", "").strip()
+        birim = request.form.get("birim", "").strip()
+        durum = request.form.get("durum", "Aktif").strip()
+
+        palet_kapasitesi = request.form.get(
+            "palet_kapasitesi",
+            0
+        )
+
+        urun_tipi = request.form.get(
+            "urun_tipi",
+            "Donuk"
+        ).strip()
+
+        koli_agirligi = request.form.get(
+            "koli_agirligi",
+            0
+        )
+
+        # ======================================
+        # TEDARİK ŞEKLİ
+        # ======================================
+
+        tedarik_sekli = request.form.get(
+            "tedarik_sekli",
+            "Merkez"
+        ).strip()
+
+        # ======================================
+        # ÜRÜNÜ VERİTABANINA EKLE
+        # ======================================
+
         add_urun(
-            request.form.get("urun_kodu", ""),
-            request.form.get("urun_adi", ""),
-            request.form.get("kategori", ""),
-            request.form.get("birim", ""),
-            request.form.get("durum", ""),
-            request.form.get("palet_kapasitesi", 0),
-            request.form.get("urun_tipi", ""),
-            request.form.get("koli_agirligi", 0)
+            urun_kodu,
+            urun_adi,
+            kategori,
+            birim,
+            durum,
+            palet_kapasitesi,
+            urun_tipi,
+            koli_agirligi,
+            tedarik_sekli
         )
 
         return redirect("/urunler")
 
-    return render_template("yeni_urun.html")
-
+    return render_template(
+        "yeni_urun.html"
+    )
+    
 
 # ==========================================================
 # ÜRÜN DÜZENLE
 # ==========================================================
-
 @app.route(
     "/urun-duzenle/<int:id>",
     methods=["GET", "POST"]
@@ -644,14 +732,15 @@ def urun_duzenle(id):
 
         update_urun(
             id,
-            request.form.get("urun_kodu", ""),
-            request.form.get("urun_adi", ""),
-            request.form.get("kategori", ""),
-            request.form.get("birim", ""),
+            request.form.get("urun_kodu", "").strip(),
+            request.form.get("urun_adi", "").strip(),
+            request.form.get("kategori", "").strip(),
+            request.form.get("birim", "").strip(),
             request.form.get("palet_kapasitesi", 0),
-            request.form.get("urun_tipi", ""),
+            request.form.get("urun_tipi", "").strip(),
             request.form.get("koli_agirligi", 0),
-            request.form.get("durum", "")
+            request.form.get("durum", "").strip(),
+            request.form.get("tedarik_sekli", "Merkez").strip()
         )
 
         return redirect("/urunler")
@@ -665,7 +754,6 @@ def urun_duzenle(id):
         "urun_duzenle.html",
         urun=urun
     )
-
 
 # ==========================================================
 # ÜRÜN SİL
@@ -937,7 +1025,10 @@ def sevkiyat_zamani_hesapla(
 # ADMIN SİPARİŞ ONAY
 # ==========================================================
 
-@app.route("/siparis-onayla/<int:id>")
+@app.route(
+    "/siparis-onayla/<int:id>",
+    methods=["GET", "POST"]
+)
 def siparis_onayla(id):
 
     # ==========================================
@@ -997,17 +1088,22 @@ def siparis_onayla(id):
     firma = sube_bilgileri[3]
 
     try:
+
         lojistik_bedeli = float(
             sube_bilgileri[4] or 0
         )
+
     except (ValueError, TypeError):
+
         lojistik_bedeli = 0
 
     # ==========================================
     # SİPARİŞ DETAYLARI
     # ==========================================
 
-    detaylar = get_siparis_detaylari_sevkiyat(id)
+    detaylar = get_siparis_detaylari_sevkiyat(
+        id
+    )
 
     # ==========================================
     # PALET TOPLAMLARI
@@ -1038,18 +1134,42 @@ def siparis_onayla(id):
         urun_tipi = detay[2]
 
         try:
+
             palet_kapasitesi = float(
                 detay[3] or 0
             )
+
         except (ValueError, TypeError):
+
             palet_kapasitesi = 0
 
         try:
+
             miktar = float(
                 detay[4] or 0
             )
+
         except (ValueError, TypeError):
+
             miktar = 0
+
+        # ==========================================
+        # TEDARİK ŞEKLİ
+        # ==========================================
+        # Ürün "Tedarikçi" seçilmişse bu ürün
+        # doğrudan tedarikçiden gelir ve merkezin
+        # paletine dahil edilmez.
+        #
+        # Bu bilgi sevkiyat ekranında gösterilmez.
+        # Sadece palet doluluk hesabında kullanılır.
+        # ==========================================
+
+        tedarik_sekli = urun_tedarik_sekli_getir(
+            detay[0]
+        )
+
+        if str(tedarik_sekli).strip().lower() == "tedarikçi":
+            continue
 
         # ==========================================
         # PALET KAPASİTESİ YOKSA GEÇ
@@ -1209,6 +1329,10 @@ def siparis_onayla(id):
     # ==========================================
     # SEVKİYAT PROGRAMINA KAYIT
     # ==========================================
+    #
+    # YENİ:
+    #
+    # ==========================================
 
     sevkiyat_programi_ekle(
         hafta=hafta,
@@ -1292,7 +1416,6 @@ def siparis_duzenle(id):
 
     if session.get("yetki") == "sube":
 
-        # Şube sadece kendi siparişini düzenleyebilir
         if siparis[2] != session.get("sube_adi"):
             abort(403)
 
@@ -1462,10 +1585,13 @@ def yeni_siparis():
         if session["yetki"] == "admin":
 
             try:
+
                 sube_id = int(
                     request.form["sube_id"]
                 )
-            except (ValueError, TypeError):
+
+            except (ValueError, TypeError, KeyError):
+
                 return redirect("/yeni-siparis")
 
         # ==========================================
@@ -1613,8 +1739,13 @@ def yeni_siparis():
         if not subeler:
 
             return """
-            <h3>Sistemde kayıtlı şube bulunmamaktadır.</h3>
-            <a href="/subeler">Şubelere Dön</a>
+            <h3>
+            Sistemde kayıtlı şube bulunmamaktadır.
+            </h3>
+
+            <a href="/subeler">
+            Şubelere Dön
+            </a>
             """
 
     else:
@@ -1647,7 +1778,7 @@ def yeni_siparis():
     # ÜRÜNLER
     # ==========================================
 
-    urunler = get_tum_urunler()
+    urunler = get_tum_urunler_siparis()
 
     # ==========================================
     # ŞUBE FİNANS LİMİTİ
@@ -1687,6 +1818,7 @@ def yeni_siparis():
 def get_sube_limit_ajax(sube_id):
 
     if "giris" not in session:
+
         return jsonify({
             "limit": 0
         })
@@ -1799,8 +1931,8 @@ def stoklar():
     # ==========================================
 
     sube_stoklari = get_sube_stoklari(
-    sube_id
-)
+        sube_id
+    )
 
     # ==========================================
     # STOK HAREKETLERİ
@@ -1837,7 +1969,9 @@ def stoklar():
         secili_hareket=hareket_tipi,
         arama=arama
     )
-    # ==========================================================
+
+
+# ==========================================================
 # MERKEZ STOKLARINI EXCEL'E AKTAR
 # ==========================================================
 
@@ -1860,7 +1994,9 @@ def stoklar_merkez_excel():
     # ==========================================
 
     wb = Workbook()
+
     ws = wb.active
+
     ws.title = "Merkez Stokları"
 
     # ==========================================
@@ -1984,7 +2120,9 @@ def stoklar_sube_excel():
     # ==========================================
 
     wb = Workbook()
+
     ws = wb.active
+
     ws.title = "Şube Stokları"
 
     # ==========================================
@@ -2090,7 +2228,6 @@ def stoklar_sube_excel():
             "spreadsheetml.sheet"
         )
     )
-    
 
 
 # ==========================================================
@@ -2283,25 +2420,25 @@ def sevkiyat_excel():
     for sevkiyat in sevkiyatlar:
 
         ws.append([
-            sevkiyat[0],
-            sevkiyat[1],
-            sevkiyat[2],
-            sevkiyat[3],
-            sevkiyat[4],
-            sevkiyat[5],
-            sevkiyat[6],
-            sevkiyat[7],
+            sevkiyat[0],   # ID
+            sevkiyat[1],   # HAFTA
+            sevkiyat[2],   # TARİH
+            sevkiyat[3],   # FİRMA
+            sevkiyat[4],   # ŞUBE ID
+            sevkiyat[5],   # ŞUBE
+            sevkiyat[6],   # DONUK
+            sevkiyat[7],   # SOĞUK
 
             # DOLULUK
             (sevkiyat[8] or 0) / 100,
             (sevkiyat[9] or 0) / 100,
 
-            sevkiyat[10],
-            sevkiyat[11],
-            sevkiyat[12],
-            sevkiyat[13],
-            sevkiyat[14],
-            sevkiyat[15]
+            sevkiyat[10],  # ATB ÇIKIŞ
+            sevkiyat[11],  # ŞUBE TESLİM
+            sevkiyat[12],  # PALET FİYATI
+            sevkiyat[13],  # TOPLAM MALİYET
+            sevkiyat[14],  # KAYIP MALİYETİ
+            sevkiyat[15]   # DURUM
         ])
 
     # ==========================================
@@ -2315,12 +2452,12 @@ def sevkiyat_excel():
 
         ws.cell(
             row=row,
-            column=9
+            column=10
         ).number_format = "0.00%"
 
         ws.cell(
             row=row,
-            column=10
+            column=11
         ).number_format = "0.00%"
 
     # ==========================================
@@ -2333,9 +2470,9 @@ def sevkiyat_excel():
     ):
 
         for column in [
-            13,
             14,
-            15
+            15,
+            16
         ]:
 
             ws.cell(
@@ -2693,7 +2830,10 @@ def sube_satis_aktar():
 
             alert(
                 "Excel aktarılırken hata oluştu:\\n\\n" +
-                {json.dumps(str(e), ensure_ascii=False)}
+                {json.dumps(
+                    str(e),
+                    ensure_ascii=False
+                )}
             );
 
             window.location="/stoklar";
@@ -2893,3 +3033,4 @@ if __name__ == "__main__":
         port=5000,
         debug=True
     )
+    

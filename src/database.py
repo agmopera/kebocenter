@@ -193,6 +193,19 @@ def create_tables():
         pass
 
     # ======================================
+# ÜRÜNLER - TEDARİK ŞEKLİ
+# ======================================
+    try:
+        cursor.execute("""
+        ALTER TABLE urunler
+        ADD COLUMN tedarik_sekli TEXT DEFAULT 'Merkez'
+    """)
+    except:
+      pass
+
+
+    
+    # ======================================
     # SİPARİŞLER TABLOSU
     # ======================================
 
@@ -783,15 +796,15 @@ def add_urun(
     durum,
     palet_kapasitesi,
     urun_tipi,
-    koli_agirligi
+    koli_agirligi,
+    tedarik_sekli
 ):
 
     conn = connect_database()
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO urunler
-        (
+        INSERT INTO urunler (
             urun_kodu,
             urun_adi,
             kategori,
@@ -799,9 +812,10 @@ def add_urun(
             durum,
             palet_kapasitesi,
             urun_tipi,
-            koli_agirligi
+            koli_agirligi,
+            tedarik_sekli
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         urun_kodu,
         urun_adi,
@@ -810,7 +824,8 @@ def add_urun(
         durum,
         palet_kapasitesi,
         urun_tipi,
-        koli_agirligi
+        koli_agirligi,
+        tedarik_sekli
     ))
 
     conn.commit()
@@ -832,7 +847,8 @@ def get_urunler():
             durum,
             palet_kapasitesi,
             urun_tipi,
-            koli_agirligi
+            koli_agirligi,
+            tedarik_sekli
 
         FROM urunler
 
@@ -873,36 +889,39 @@ def update_urun(
     palet_kapasitesi,
     urun_tipi,
     koli_agirligi,
-    durum
+    durum,
+    tedarik_sekli
 ):
 
     conn = connect_database()
     cursor = conn.cursor()
 
     cursor.execute("""
-        UPDATE urunler
-        SET
-            urun_kodu=?,
-            urun_adi=?,
-            kategori=?,
-            birim=?,
-            durum=?,
-            palet_kapasitesi=?,
-            urun_tipi=?,
-            koli_agirligi=?
+    UPDATE urunler
+    SET
+        urun_kodu=?,
+        urun_adi=?,
+        kategori=?,
+        birim=?,
+        durum=?,
+        palet_kapasitesi=?,
+        urun_tipi=?,
+        koli_agirligi=?,
+        tedarik_sekli=?
 
-        WHERE id=?
-    """, (
-        urun_kodu,
-        urun_adi,
-        kategori,
-        birim,
-        durum,
-        palet_kapasitesi,
-        urun_tipi,
-        koli_agirligi,
-        id
-    ))
+    WHERE id=?
+""", (
+    urun_kodu,
+    urun_adi,
+    kategori,
+    birim,
+    durum,
+    palet_kapasitesi,
+    urun_tipi,
+    koli_agirligi,
+    tedarik_sekli,
+    id
+))
 
     conn.commit()
     conn.close()
@@ -1456,7 +1475,7 @@ def get_tum_subeler():
     conn.close()
 
     return sonuc
-    
+
 
     
 def get_siparis_miktari(
@@ -2642,3 +2661,4 @@ def sevkiyat_durum_guncelle(
     conn.commit()
 
     conn.close()
+
