@@ -3,257 +3,1631 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Kebo Operasyon Yönetim Sistemi</title>
+    <title>Kebo Operasyon Yönetim Sistemi</title>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
 
-<style>
+    <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body{
-    background:#f4f6f9;
-    font-family:Segoe UI,Arial,sans-serif;
-}
+        body {
+            background: #f4f6f9;
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: #1f2937;
+        }
 
-.sidebar{
-    position:fixed;
-    left:0;
-    top:0;
-    width:250px;
-    height:100vh;
-    background:#1f2937;
-    color:white;
-}
+        /* =====================================================
+           SIDEBAR
+           ===================================================== */
 
-.sidebar img{
-    width:170px;
-    display:block;
-    margin:30px auto;
-}
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(
+                180deg,
+                #111827 0%,
+                #1f2937 100%
+            );
+            color: white;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(0,0,0,.08);
+        }
 
-.sidebar h4{
-    text-align:center;
-    margin-bottom:35px;
-    font-size:20px;
-}
+        .sidebar-logo {
+            padding-top: 25px;
+        }
 
-.menu a{
-    display:block;
-    color:white;
-    text-decoration:none;
-    padding:15px 25px;
-    transition:.3s;
-}
+        .sidebar img {
+            width: 165px;
+            height: auto;
+            display: block;
+            margin: 0 auto 18px auto;
+            border-radius: 8px;
+        }
 
-.menu a:hover{
-    background:#dc3545;
-}
+        .sidebar-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 28px;
+            color: #f9fafb;
+        }
 
-.content{
-    margin-left:250px;
-    padding:35px;
-}
+        .menu {
+            padding: 0 12px;
+        }
 
-.topbar{
-    background:white;
-    padding:20px 30px;
-    border-radius:12px;
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
-    margin-bottom:30px;
-}
+        .menu-title {
+            color: #9ca3af;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 15px 15px 8px 15px;
+            text-transform: uppercase;
+        }
 
-.card-box{
-    background:white;
-    border-radius:12px;
-    padding:30px;
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
-    text-align:center;
-    transition:.3s;
-}
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #d1d5db;
+            text-decoration: none;
+            padding: 13px 15px;
+            margin-bottom: 4px;
+            border-radius: 9px;
+            font-size: 14px;
+            transition: all .25s ease;
+        }
 
-.card-box:hover{
-    transform:translateY(-5px);
-}
+        .menu a:hover {
+            background: rgba(220, 53, 69, .15);
+            color: white;
+            transform: translateX(4px);
+        }
 
-.card-title{
-    color:#777;
-    margin-bottom:10px;
-}
+        .menu a.active {
+            background: linear-gradient(
+                90deg,
+                #dc3545,
+                #b91c1c
+            );
+            color: white;
+            box-shadow: 0 5px 15px rgba(220,53,69,.25);
+        }
 
-.card-value{
-    font-size:34px;
-    font-weight:bold;
-    color:#dc3545;
-}
+        .menu-icon {
+            width: 25px;
+            text-align: center;
+            font-size: 17px;
+        }
 
-</style>
+        .logout-link {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,.08);
+            padding-top: 15px !important;
+        }
+
+        /* =====================================================
+           CONTENT
+           ===================================================== */
+
+        .content {
+            margin-left: 250px;
+            padding: 28px 32px 45px 32px;
+            min-height: 100vh;
+        }
+
+        /* =====================================================
+           TOP BAR
+           ===================================================== */
+
+        .topbar {
+            background: white;
+            padding: 22px 28px;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px rgba(0,0,0,.06);
+            margin-bottom: 25px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .welcome-title {
+            font-size: 25px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+
+        .welcome-text {
+            color: #6b7280;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .date-box {
+            text-align: right;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .date-box strong {
+            display: block;
+            color: #374151;
+            font-size: 15px;
+            margin-top: 3px;
+        }
+
+        /* =====================================================
+           HERO
+           ===================================================== */
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+            padding: 30px;
+            margin-bottom: 25px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #1f2937,
+                    #374151
+                );
+
+            color: white;
+            box-shadow: 0 10px 30px rgba(31,41,55,.18);
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: rgba(220,53,69,.15);
+            right: -60px;
+            top: -80px;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.05);
+            right: 120px;
+            bottom: -80px;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h3 {
+            font-size: 25px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .hero p {
+            color: #d1d5db;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .hero-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #dc3545;
+            color: white;
+            text-decoration: none;
+            padding: 11px 18px;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: .25s;
+        }
+
+        .hero-btn:hover {
+            background: #bb2d3b;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* =====================================================
+           STAT CARDS
+           ===================================================== */
+
+        .stat-card {
+            position: relative;
+            background: white;
+            border-radius: 15px;
+            padding: 22px;
+            height: 100%;
+            box-shadow: 0 5px 18px rgba(0,0,0,.055);
+            transition: all .25s ease;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,.10);
+        }
+
+        .stat-card::after {
+            content: "";
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            right: -25px;
+            bottom: -25px;
+            background: rgba(220,53,69,.06);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        .icon-red {
+            background: #fee2e2;
+        }
+
+        .icon-blue {
+            background: #dbeafe;
+        }
+
+        .icon-green {
+            background: #dcfce7;
+        }
+
+        .icon-orange {
+            background: #ffedd5;
+        }
+
+        .stat-title {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 31px;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1;
+        }
+
+        .stat-description {
+            color: #9ca3af;
+            font-size: 12px;
+            margin-top: 9px;
+        }
+
+        /* =====================================================
+           SECTION TITLE
+           ===================================================== */
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        /* =====================================================
+           OPERATION CARD
+           ===================================================== */
+
+        .operation-card {
+            background: white;
+            border-radius: 15px;
+            padding: 22px;
+            box-shadow: 0 5px 18px rgba(0,0,0,.055);
+            height: 100%;
+        }
+
+        .operation-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 13px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .operation-item:last-child {
+            border-bottom: none;
+        }
+
+        .operation-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .operation-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f4f6;
+            font-size: 17px;
+        }
+
+        .operation-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .operation-desc {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        /* =====================================================
+           QUICK ACTIONS
+           ===================================================== */
+
+        .quick-card {
+            background: white;
+            border-radius: 15px;
+            padding: 22px;
+            box-shadow: 0 5px 18px rgba(0,0,0,.055);
+            height: 100%;
+        }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #374151;
+            background: #f8fafc;
+            border: 1px solid #eef0f3;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 9px;
+            transition: all .2s ease;
+        }
+
+        .quick-action:last-child {
+            margin-bottom: 0;
+        }
+
+        .quick-action:hover {
+            background: #fff5f5;
+            border-color: #f1b0b7;
+            color: #dc3545;
+            transform: translateX(3px);
+        }
+
+        .quick-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.05);
+        }
+
+        .quick-text {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .quick-arrow {
+            margin-left: auto;
+            color: #9ca3af;
+        }
+
+        /* =====================================================
+           SYSTEM STATUS
+           ===================================================== */
+
+        .status-card {
+            background: white;
+            border-radius: 15px;
+            padding: 22px;
+            box-shadow: 0 5px 18px rgba(0,0,0,.055);
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 13px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .status-row:last-child {
+            border-bottom: none;
+        }
+
+        .status-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-info {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        /* =====================================================
+           FOOTER
+           ===================================================== */
+
+        .footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 12px;
+            padding-top: 30px;
+        }
+
+        /* =====================================================
+           RESPONSIVE
+           ===================================================== */
+
+        @media (max-width: 992px) {
+
+            .sidebar {
+                width: 210px;
+            }
+
+            .content {
+                margin-left: 210px;
+                padding: 22px;
+            }
+
+        }
+
+        @media (max-width: 768px) {
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+
+            .sidebar img {
+                margin-top: 20px;
+            }
+
+            .content {
+                margin-left: 0;
+                padding: 18px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .date-box {
+                text-align: left;
+            }
+
+        }
+
+    </style>
 
 </head>
 
+
 <body>
+
+
+<!-- =========================================================
+     SIDEBAR
+     ========================================================= -->
 
 <div class="sidebar">
 
-    <img src="{{ url_for('static', filename='images/logo.jpg') }}">
+    <div class="sidebar-logo">
 
-    <h4>Kebo Yönetim Paneli</h4>
+        <img
+            src="{{ url_for('static', filename='images/logo.jpg') }}"
+            alt="Kebo Logo"
+        >
+
+        <div class="sidebar-title">
+            Kebo Yönetim Paneli
+        </div>
+
+    </div>
+
 
     <div class="menu">
 
-        <a href="/dashboard">
-            🏠 Ana Sayfa
+        <div class="menu-title">
+            Ana Menü
+        </div>
+
+
+        <a href="/dashboard" class="active">
+
+            <span class="menu-icon">🏠</span>
+
+            <span>Ana Sayfa</span>
+
         </a>
 
+
         <a href="/siparisler">
-            📦 Siparişler
+
+            <span class="menu-icon">📦</span>
+
+            <span>Siparişler</span>
+
         </a>
+
 
         {% if yetki == "admin" %}
 
+
+        <div class="menu-title">
+            Yönetim
+        </div>
+
+
         <a href="/subeler">
-            🏢 Şubeler
+
+            <span class="menu-icon">🏢</span>
+
+            <span>Şubeler</span>
+
         </a>
+
 
         <a href="/urunler">
-            📋 Ürünler
+
+            <span class="menu-icon">📋</span>
+
+            <span>Ürünler</span>
+
         </a>
+
 
         <a href="/finans">
-            💰 Finans
+
+            <span class="menu-icon">💰</span>
+
+            <span>Finans</span>
+
         </a>
 
-         <a href="/raporlar">
-            📊 Raporlar
+
+        <a href="/raporlar">
+
+            <span class="menu-icon">📊</span>
+
+            <span>Raporlar</span>
+
         </a>
+
 
         <a href="/ai">
-            ⚡ Ai 
+
+            <span class="menu-icon">⚡</span>
+
+            <span>AI</span>
+
         </a>
+
 
         <a href="/stoklar">
-            📦 Stoklar
-        </a>
-        
-        <a href="/sevkiyat">
-            🚚 Sevkiyat
+
+            <span class="menu-icon">📦</span>
+
+            <span>Stoklar</span>
+
         </a>
 
+
+        <a href="/sevkiyat">
+
+            <span class="menu-icon">🚚</span>
+
+            <span>Sevkiyat</span>
+
+        </a>
 
 
         {% endif %}
+
 
         {% if yetki == "sube" %}
 
+
+        <div class="menu-title">
+            İşlemler
+        </div>
+
+
         <a href="/yeni-siparis">
-            ➕ Yeni Sipariş
+
+            <span class="menu-icon">➕</span>
+
+            <span>Yeni Sipariş</span>
+
         </a>
+
 
         {% endif %}
 
-        <a href="/logout">
-            🚪 Çıkış Yap
+
+        <a href="/logout" class="logout-link">
+
+            <span class="menu-icon">🚪</span>
+
+            <span>Çıkış Yap</span>
+
         </a>
+
 
     </div>
 
 </div>
 
-<!-- BURASI EKSİKTİ -->
+
+
+<!-- =========================================================
+     ANA İÇERİK
+     ========================================================= -->
+
 <div class="content">
+
+
+    <!-- =====================================================
+         ÜST BAR
+         ===================================================== -->
 
     <div class="topbar">
 
-        <h2>Hoş Geldiniz {{ sube }}</h2>
+        <div>
 
-        <p>Kebo Operasyon Sistemine başarıyla giriş yaptınız.</p>
+            <div class="welcome-title">
 
-        {% if yetki == "admin" %}
+                Hoş Geldiniz{% if sube %}, {{ sube }}{% endif %}
 
-        <a href="/excel-rapor" class="btn btn-success mt-3">
-            📄 Excel Sipariş Raporu
-        </a>
+            </div>
 
-        {% endif %}
+            <p class="welcome-text">
+
+                Kebo Operasyon Yönetim Sistemine başarıyla giriş yaptınız.
+
+            </p>
+
+        </div>
+
+
+        <div class="date-box">
+
+            Bugün
+
+            <strong id="currentDate">
+                -
+            </strong>
+
+        </div>
 
     </div>
 
-    <div class="row g-4">
 
-        <div class="col-md-3">
 
-            <div class="card-box">
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
 
-                <div class="card-title">
+    <div class="hero">
+
+        <div class="hero-content">
+
+            <h3>
+                Kebo Operasyon Merkezi
+            </h3>
+
+            <p>
+                Sipariş, stok, finans ve sevkiyat operasyonlarınızı
+                tek merkezden yönetin.
+            </p>
+
+
+            {% if yetki == "admin" %}
+
+            <a
+                href="/siparisler"
+                class="hero-btn"
+            >
+                📦 Siparişleri Görüntüle
+            </a>
+
+            <a
+                href="/raporlar"
+                class="hero-btn"
+                style="margin-left:8px;background:#374151;border:1px solid rgba(255,255,255,.15);"
+            >
+                📊 Raporları Görüntüle
+            </a>
+
+            {% else %}
+
+            <a
+                href="/yeni-siparis"
+                class="hero-btn"
+            >
+                ➕ Yeni Sipariş Oluştur
+            </a>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         İSTATİSTİKLER
+         ===================================================== -->
+
+    <div class="row g-4 mb-4">
+
+
+        <!-- SİPARİŞ -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="stat-card">
+
+                <div class="stat-icon icon-red">
+                    📦
+                </div>
+
+                <div class="stat-title">
                     Bugünkü Sipariş
                 </div>
 
-                <div class="card-value">
-                    {{ siparis_sayisi }}
+                <div
+                    class="stat-value counter"
+                    data-target="{{ siparis_sayisi }}"
+                >
+                    0
+                </div>
+
+                <div class="stat-description">
+                    Günlük sipariş adedi
                 </div>
 
             </div>
 
         </div>
 
-        <div class="col-md-3">
 
-            <div class="card-box">
+        <!-- ŞUBE -->
 
-                <div class="card-title">
+        <div class="col-xl-3 col-md-6">
+
+            <div class="stat-card">
+
+                <div class="stat-icon icon-blue">
+                    🏢
+                </div>
+
+                <div class="stat-title">
                     Şube Sayısı
                 </div>
 
-                <div class="card-value">
-                    {{ sube_sayisi }}
+                <div
+                    class="stat-value counter"
+                    data-target="{{ sube_sayisi }}"
+                >
+                    0
+                </div>
+
+                <div class="stat-description">
+                    Sistemde kayıtlı şubeler
                 </div>
 
             </div>
 
         </div>
 
-        <div class="col-md-3">
 
-            <div class="card-box">
+        <!-- ÜRÜN -->
 
-                <div class="card-title">
+        <div class="col-xl-3 col-md-6">
+
+            <div class="stat-card">
+
+                <div class="stat-icon icon-green">
+                    📋
+                </div>
+
+                <div
+                    class="stat-title"
+                >
                     Ürün Sayısı
                 </div>
 
-                <div class="card-value">
-                    {{ urun_sayisi }}
+                <div
+                    class="stat-value counter"
+                    data-target="{{ urun_sayisi }}"
+                >
+                    0
+                </div>
+
+                <div class="stat-description">
+                    Sistemde kayıtlı ürünler
                 </div>
 
             </div>
 
         </div>
 
-        <div class="col-md-3">
 
-            <div class="card-box">
+        <!-- KULLANICI -->
 
-                <div class="card-title">
+        <div class="col-xl-3 col-md-6">
+
+            <div class="stat-card">
+
+                <div class="stat-icon icon-orange">
+                    👤
+                </div>
+
+                <div class="stat-title">
                     Aktif Kullanıcı
                 </div>
 
-                <div class="card-value">
-                    1
+                <div
+                    class="stat-value counter"
+                    data-target="1"
+                >
+                    0
+                </div>
+
+                <div class="stat-description">
+                    Şu anda aktif oturum
                 </div>
 
             </div>
 
         </div>
 
+
     </div>
 
+
+
+    <!-- =====================================================
+         OPERASYON + HIZLI İŞLEMLER
+         ===================================================== -->
+
+    <div class="row g-4 mb-4">
+
+
+        <!-- OPERASYON DURUMU -->
+
+        <div class="col-lg-7">
+
+            <div class="operation-card">
+
+                <div class="section-title">
+                    📊 Operasyon Merkezi
+                </div>
+
+
+                <div class="operation-item">
+
+                    <div class="operation-left">
+
+                        <div class="operation-icon">
+                            📦
+                        </div>
+
+                        <div>
+
+                            <div class="operation-name">
+                                Sipariş Yönetimi
+                            </div>
+
+                            <div class="operation-desc">
+                                Siparişleri görüntüleyin ve yönetin.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <a
+                        href="/siparisler"
+                        class="btn btn-sm btn-outline-danger"
+                    >
+                        Görüntüle
+                    </a>
+
+                </div>
+
+
+                {% if yetki == "admin" %}
+
+
+                <div class="operation-item">
+
+                    <div class="operation-left">
+
+                        <div class="operation-icon">
+                            🚚
+                        </div>
+
+                        <div>
+
+                            <div class="operation-name">
+                                Sevkiyat Yönetimi
+                            </div>
+
+                            <div class="operation-desc">
+                                Sevkiyat programını ve araçları yönetin.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <a
+                        href="/sevkiyat"
+                        class="btn btn-sm btn-outline-danger"
+                    >
+                        Görüntüle
+                    </a>
+
+                </div>
+
+
+                <div class="operation-item">
+
+                    <div class="operation-left">
+
+                        <div class="operation-icon">
+                            📦
+                        </div>
+
+                        <div>
+
+                            <div class="operation-name">
+                                Stok Yönetimi
+                            </div>
+
+                            <div class="operation-desc">
+                                Merkez ve şube stoklarını takip edin.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <a
+                        href="/stoklar"
+                        class="btn btn-sm btn-outline-danger"
+                    >
+                        Görüntüle
+                    </a>
+
+                </div>
+
+
+                <div class="operation-item">
+
+                    <div class="operation-left">
+
+                        <div class="operation-icon">
+                            💰
+                        </div>
+
+                        <div>
+
+                            <div class="operation-name">
+                                Finans Yönetimi
+                            </div>
+
+                            <div class="operation-desc">
+                                Şube limitlerini ve finansal durumu yönetin.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <a
+                        href="/finans"
+                        class="btn btn-sm btn-outline-danger"
+                    >
+                        Görüntüle
+                    </a>
+
+                </div>
+
+
+                {% else %}
+
+
+                <div class="operation-item">
+
+                    <div class="operation-left">
+
+                        <div class="operation-icon">
+                            ➕
+                        </div>
+
+                        <div>
+
+                            <div class="operation-name">
+                                Yeni Sipariş
+                            </div>
+
+                            <div class="operation-desc">
+                                Yeni ürün siparişi oluşturun.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <a
+                        href="/yeni-siparis"
+                        class="btn btn-sm btn-outline-danger"
+                    >
+                        Sipariş Ver
+                    </a>
+
+                </div>
+
+
+                {% endif %}
+
+
+            </div>
+
+        </div>
+
+
+
+        <!-- HIZLI İŞLEMLER -->
+
+        <div class="col-lg-5">
+
+            <div class="quick-card">
+
+                <div class="section-title">
+                    ⚡ Hızlı İşlemler
+                </div>
+
+
+                <a
+                    href="/siparisler"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        📦
+                    </div>
+
+                    <div class="quick-text">
+                        Siparişleri Görüntüle
+                    </div>
+
+                    <div class="quick-arrow">
+                        →
+                    </div>
+
+                </a>
+
+
+                {% if yetki == "admin" %}
+
+
+                <a
+                    href="/raporlar"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        📊
+                    </div>
+
+                    <div class="quick-text">
+                        Raporlar
+                    </div>
+
+                    <div class="quick-arrow">
+                        →
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="/excel-rapor"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        📄
+                    </div>
+
+                    <div class="quick-text">
+                        Excel Sipariş Raporu
+                    </div>
+
+                    <div class="quick-arrow">
+                        ↓
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="/subeler"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        🏢
+                    </div>
+
+                    <div class="quick-text">
+                        Şube Yönetimi
+                    </div>
+
+                    <div class="quick-arrow">
+                        →
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="/urunler"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        📋
+                    </div>
+
+                    <div class="quick-text">
+                        Ürün Yönetimi
+                    </div>
+
+                    <div class="quick-arrow">
+                        →
+                    </div>
+
+                </a>
+
+
+                {% else %}
+
+
+                <a
+                    href="/yeni-siparis"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        ➕
+                    </div>
+
+                    <div class="quick-text">
+                        Yeni Sipariş Oluştur
+                    </div>
+
+                    <div class="quick-arrow">
+                        →
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="/siparisler"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        📦
+                    </div>
+
+                    <div class="quick-text">
+                        Siparişlerimi Görüntüle
+                    </div>
+
+                    <div class="quick-arrow">
+                        →
+                    </div>
+
+                </a>
+
+
+                {% endif %}
+
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         SİSTEM DURUMU
+         ===================================================== -->
+
+    <div class="row g-4">
+
+
+        <div class="col-lg-8">
+
+            <div class="status-card">
+
+                <div class="section-title">
+                    🟢 Sistem Durumu
+                </div>
+
+
+                <div class="status-row">
+
+                    <div>
+
+                        <div class="status-name">
+                            Sipariş Sistemi
+                        </div>
+
+                    </div>
+
+                    <span class="status-badge status-online">
+                        ● Aktif
+                    </span>
+
+                </div>
+
+
+                <div class="status-row">
+
+                    <div>
+
+                        <div class="status-name">
+                            Stok Yönetimi
+                        </div>
+
+                    </div>
+
+                    <span class="status-badge status-online">
+                        ● Aktif
+                    </span>
+
+                </div>
+
+
+                <div class="status-row">
+
+                    <div>
+
+                        <div class="status-name">
+                            Sevkiyat Yönetimi
+                        </div>
+
+                    </div>
+
+                    <span class="status-badge status-online">
+                        ● Aktif
+                    </span>
+
+                </div>
+
+
+                <div class="status-row">
+
+                    <div>
+
+                        <div class="status-name">
+                            Finans Yönetimi
+                        </div>
+
+                    </div>
+
+                    <span class="status-badge status-online">
+                        ● Aktif
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+
+        <div class="col-lg-4">
+
+            <div class="status-card">
+
+                <div class="section-title">
+                    ℹ️ Sistem Bilgisi
+                </div>
+
+
+                <div class="status-row">
+
+                    <span class="status-name">
+                        Kullanıcı
+                    </span>
+
+                    <span class="status-badge status-info">
+                        {{ sube }}
+                    </span>
+
+                </div>
+
+
+                <div class="status-row">
+
+                    <span class="status-name">
+                        Yetki
+                    </span>
+
+                    <span class="status-badge status-info">
+                        {{ yetki|upper }}
+                    </span>
+
+                </div>
+
+
+                <div class="status-row">
+
+                    <span class="status-name">
+                        Sistem
+                    </span>
+
+                    <span class="status-badge status-online">
+                        Kebo ERP
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <div class="footer">
+
+        Kebo Operasyon Yönetim Sistemi
+        •
+        Tüm operasyonlar tek merkezde
+
+    </div>
+
+
 </div>
+
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script>
+
+
+/* ==========================================================
+   TARİH
+   ========================================================== */
+
+function tarihGoster() {
+
+    const tarih =
+        new Date();
+
+    const aylar = [
+        "Ocak",
+        "Şubat",
+        "Mart",
+        "Nisan",
+        "Mayıs",
+        "Haziran",
+        "Temmuz",
+        "Ağustos",
+        "Eylül",
+        "Ekim",
+        "Kasım",
+        "Aralık"
+    ];
+
+    const gunler = [
+        "Pazar",
+        "Pazartesi",
+        "Salı",
+        "Çarşamba",
+        "Perşembe",
+        "Cuma",
+        "Cumartesi"
+    ];
+
+    const metin =
+        tarih.getDate()
+        + " "
+        + aylar[tarih.getMonth()]
+        + " "
+        + tarih.getFullYear()
+        + " • "
+        + gunler[tarih.getDay()];
+
+    document.getElementById(
+        "currentDate"
+    ).innerHTML = metin;
+
+}
+
+
+tarihGoster();
+
+
+
+/* ==========================================================
+   SAYI ANİMASYONU
+   ========================================================== */
+
+function sayacAnimasyonu() {
+
+    const counters =
+        document.querySelectorAll(
+            ".counter"
+        );
+
+
+    counters.forEach(
+        function(counter) {
+
+            const target =
+                Number(
+                    counter.dataset.target
+                );
+
+
+            if (
+                isNaN(target)
+            ) {
+
+                counter.innerText = "0";
+
+                return;
+
+            }
+
+
+            let current = 0;
+
+
+            const duration = 700;
+
+            const stepTime =
+                Math.max(
+                    Math.floor(
+                        duration / Math.max(target, 1)
+                    ),
+                    15
+                );
+
+
+            const timer =
+                setInterval(
+                    function() {
+
+                        current +=
+                            Math.ceil(
+                                target / 30
+                            );
+
+
+                        if (
+                            current >= target
+                        ) {
+
+                            current = target;
+
+                            clearInterval(
+                                timer
+                            );
+
+                        }
+
+
+                        counter.innerText =
+                            current.toLocaleString(
+                                "tr-TR"
+                            );
+
+                    },
+                    stepTime
+                );
+
+        }
+    );
+
+}
+
+
+sayacAnimasyonu();
+
+
+</script>
+
 
 </body>
 
