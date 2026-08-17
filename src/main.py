@@ -171,6 +171,7 @@ SIPARIS_DURUMLARI = [
 ]
 
 
+
 # ==========================================================
 # YETKİ KONTROL
 # ==========================================================
@@ -184,6 +185,432 @@ def admin_kontrol():
         abort(403)
 
     return None
+
+
+# ==========================================================
+# CANLI VERİ KURTARMA - GEÇİCİ
+# ==========================================================
+
+@app.route("/veri-kurtar", methods=["GET"])
+def veri_kurtar():
+
+    # ==================================================
+    # SADECE ADMIN ERİŞEBİLİR
+    # ==================================================
+
+    sonuc = admin_kontrol()
+
+    if sonuc:
+        return sonuc
+
+    # ==================================================
+    # VERİTABANINA BAĞLAN
+    # ==================================================
+
+    conn = connect_database()
+    cursor = conn.cursor()
+
+    # ==================================================
+    # EXCEL DOSYASI OLUŞTUR
+    # ==================================================
+
+    wb = Workbook()
+
+    # ==================================================
+    # ŞUBELER
+    # ==================================================
+
+    ws_subeler = wb.active
+    ws_subeler.title = "Şubeler"
+
+    cursor.execute("""
+        SELECT
+            id,
+            sube_adi,
+            kullanici_adi,
+            sifre,
+            yetkili,
+            telefon,
+            eposta,
+            il,
+            ilce,
+            adres,
+            durum,
+            uretim_gunu,
+            sevkiyat_gunu,
+            sevkiyat_saati,
+            teslim_suresi,
+            firma,
+            lojistik_bedeli,
+            limit_tutari
+        FROM subeler
+        ORDER BY sube_adi
+    """)
+
+    subeler = cursor.fetchall()
+
+    ws_subeler.append([
+        "ID",
+        "Şube Adı",
+        "Kullanıcı Adı",
+        "Şifre",
+        "Yetkili",
+        "Telefon",
+        "E-posta",
+        "İl",
+        "İlçe",
+        "Adres",
+        "Durum",
+        "Üretim Günü",
+        "Sevkiyat Günü",
+        "Sevkiyat Saati",
+        "Teslim Süresi",
+        "Firma",
+        "Lojistik Bedeli",
+        "Limit Tutarı"
+    ])
+
+    for satir in subeler:
+        ws_subeler.append(list(satir))
+
+    # ==================================================
+    # ÜRÜNLER
+    # ==================================================
+
+    ws_urunler = wb.create_sheet("Ürünler")
+
+    cursor.execute("""
+        SELECT
+            id,
+            urun_kodu,
+            urun_adi,
+            kategori,
+            birim,
+            durum,
+            palet_kapasitesi,
+            urun_tipi,
+            koli_agirligi,
+            tedarik_sekli,
+            fiyat
+        FROM urunler
+        ORDER BY urun_adi
+    """)
+
+    urunler = cursor.fetchall()
+
+    ws_urunler.append([
+        "ID",
+        "Ürün Kodu",
+        "Ürün Adı",
+        "Kategori",
+        "Birim",
+        "Durum",
+        "Palet Kapasitesi",
+        "Ürün Tipi",
+        "Koli Ağırlığı",
+        "Tedarik Şekli",
+        "Fiyat"
+    ])
+
+    for satir in urunler:
+        ws_urunler.append(list(satir))
+
+    # ==================================================
+    # SİPARİŞLER
+    # ==================================================
+
+    ws_siparisler = wb.create_sheet("Siparişler")
+
+    cursor.execute("""
+        SELECT
+            id,
+            siparis_no,
+            sube_id,
+            tarih,
+            durum
+        FROM siparisler
+        ORDER BY id
+    """)
+
+    siparisler = cursor.fetchall()
+
+    ws_siparisler.append([
+        "ID",
+        "Sipariş No",
+        "Şube ID",
+        "Tarih",
+        "Durum"
+    ])
+
+    for satir in siparisler:
+        ws_siparisler.append(list(satir))
+
+    # ==================================================
+    # SİPARİŞ DETAY
+    # ==================================================
+
+    ws_detay = wb.create_sheet("Sipariş Detay")
+
+    cursor.execute("""
+        SELECT
+            id,
+            siparis_id,
+            urun_id,
+            miktar
+        FROM siparis_detay
+        ORDER BY id
+    """)
+
+    detaylar = cursor.fetchall()
+
+    ws_detay.append([
+        "ID",
+        "Sipariş ID",
+        "Ürün ID",
+        "Miktar"
+    ])
+
+    for satir in detaylar:
+        ws_detay.append(list(satir))
+
+    # ==================================================
+    # SİPARİŞ GEÇMİŞİ
+    # ==================================================
+
+    ws_gecmis = wb.create_sheet("Sipariş Geçmişi")
+
+    cursor.execute("""
+        SELECT
+            id,
+            siparis_id,
+            tarih,
+            kullanici,
+            eski_durum,
+            yeni_durum
+        FROM siparis_gecmisi
+        ORDER BY id
+    """)
+
+    gecmis = cursor.fetchall()
+
+    ws_gecmis.append([
+        "ID",
+        "Sipariş ID",
+        "Tarih",
+        "Kullanıcı",
+        "Eski Durum",
+        "Yeni Durum"
+    ])
+
+    for satir in gecmis:
+        ws_gecmis.append(list(satir))
+
+    # ==================================================
+    # MERKEZ STOK
+    # ==================================================
+
+    ws_merkez_stok = wb.create_sheet("Merkez Stok")
+
+    cursor.execute("""
+        SELECT
+            id,
+            urun_id,
+            miktar
+        FROM merkez_stok
+        ORDER BY urun_id
+    """)
+
+    merkez_stok = cursor.fetchall()
+
+    ws_merkez_stok.append([
+        "ID",
+        "Ürün ID",
+        "Miktar"
+    ])
+
+    for satir in merkez_stok:
+        ws_merkez_stok.append(list(satir))
+
+    # ==================================================
+    # ŞUBE STOK
+    # ==================================================
+
+    ws_sube_stok = wb.create_sheet("Şube Stok")
+
+    cursor.execute("""
+        SELECT
+            id,
+            sube_id,
+            urun_id,
+            miktar
+        FROM sube_stok
+        ORDER BY sube_id, urun_id
+    """)
+
+    sube_stok = cursor.fetchall()
+
+    ws_sube_stok.append([
+        "ID",
+        "Şube ID",
+        "Ürün ID",
+        "Miktar"
+    ])
+
+    for satir in sube_stok:
+        ws_sube_stok.append(list(satir))
+
+    # ==================================================
+    # STOK HAREKETLERİ
+    # ==================================================
+
+    ws_stok_hareketleri = wb.create_sheet("Stok Hareketleri")
+
+    cursor.execute("""
+        SELECT
+            id,
+            urun_id,
+            miktar,
+            hareket_tipi,
+            kaynak,
+            hedef,
+            siparis_id,
+            tarih,
+            aciklama
+        FROM stok_hareketleri
+        ORDER BY id
+    """)
+
+    stok_hareketleri = cursor.fetchall()
+
+    ws_stok_hareketleri.append([
+        "ID",
+        "Ürün ID",
+        "Miktar",
+        "Hareket Tipi",
+        "Kaynak",
+        "Hedef",
+        "Sipariş ID",
+        "Tarih",
+        "Açıklama"
+    ])
+
+    for satir in stok_hareketleri:
+        ws_stok_hareketleri.append(list(satir))
+
+    # ==================================================
+    # SEVKİYAT PROGRAMI
+    # ==================================================
+
+    ws_sevkiyat = wb.create_sheet("Sevkiyat Programı")
+
+    cursor.execute("""
+        SELECT
+            id,
+            hafta,
+            tarih,
+            firma,
+            sube_id,
+            donuk,
+            soguk,
+            donuk_doluluk,
+            soguk_doluluk,
+            atb_cikis,
+            sube_teslim,
+            palet_fiyat,
+            toplam_maliyet,
+            kayip_maliyeti,
+            durum
+        FROM sevkiyat_programi
+        ORDER BY id
+    """)
+
+    sevkiyatlar = cursor.fetchall()
+
+    ws_sevkiyat.append([
+        "ID",
+        "Hafta",
+        "Tarih",
+        "Firma",
+        "Şube ID",
+        "Donuk",
+        "Soğuk",
+        "Donuk Doluluk",
+        "Soğuk Doluluk",
+        "ATB Çıkış",
+        "Şube Teslim",
+        "Palet Fiyat",
+        "Toplam Maliyet",
+        "Kayıp Maliyeti",
+        "Durum"
+    ])
+
+    for satir in sevkiyatlar:
+        ws_sevkiyat.append(list(satir))
+
+    # ==================================================
+    # SÜTUN GENİŞLİKLERİ
+    # ==================================================
+
+    for ws in wb.worksheets:
+
+        for column in ws.columns:
+
+            max_length = 0
+
+            column_letter = get_column_letter(
+                column[0].column
+            )
+
+            for cell in column:
+
+                try:
+
+                    if cell.value is not None:
+
+                        max_length = max(
+                            max_length,
+                            len(str(cell.value))
+                        )
+
+                except Exception:
+                    pass
+
+            ws.column_dimensions[
+                column_letter
+            ].width = min(
+                max(max_length + 2, 12),
+                40
+            )
+
+        # Başlıkları kalın yap
+        for cell in ws[1]:
+            cell.font = Font(bold=True)
+
+    # ==================================================
+    # EXCEL'İ BELLEĞE AL
+    # ==================================================
+
+    output = BytesIO()
+
+    wb.save(output)
+
+    output.seek(0)
+
+    conn.close()
+
+    # ==================================================
+    # DOSYAYI İNDİR
+    # ==================================================
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="KEBOCENTER_CANLI_VERI_YEDEGI.xlsx",
+        mimetype=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
+    )
 
 
 # ==========================================================
@@ -212,6 +639,8 @@ def login():
             kullanici_adi,
             sifre
         )
+
+
 
         # ==========================================
         # ADMIN GİRİŞİ
